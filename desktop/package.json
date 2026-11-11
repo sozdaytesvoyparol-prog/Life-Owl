@@ -16,7 +16,7 @@
   "build": {
     "appId": "com.lifeowl.app",
     "productName": "Life Owl",
-    "artifactName": "LifeOwl-${version}-${target}.${ext}",
+    "artifactName": "LifeOwl-${version}.${ext}",
     "directories": {
       "output": "dist",
       "buildResources": "build"
