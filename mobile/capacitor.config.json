@@ -1,0 +1,7 @@
+{
+  "appId": "com.lifeowl.app",
+  "appName": "Life Owl",
+  "webDir": "www",
+  "server": { "androidScheme": "https", "cleartext": true },
+  "android": { "allowMixedContent": true, "backgroundColor": "#04061a" }
+}

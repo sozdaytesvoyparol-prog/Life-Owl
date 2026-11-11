@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; connect-src 'self' https: http:; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Life Owl</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body data-skin="violet">
+
+  <!-- Фон: тёмный градиент + плавные волны -->
+  <div class="bg" aria-hidden="true">
+    <div id="bg-img" class="bg-img"></div>
+    <canvas id="snow" class="snow"></canvas>
+    <svg class="silk" viewBox="0 0 1600 900" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+      <defs>
+        <linearGradient id="sk1" x1="0" x2="1" y1="0" y2="0"><stop offset="0" stop-color="#9aa6ff" stop-opacity="0"/><stop offset=".35" stop-color="#d6dcff" stop-opacity=".9"/><stop offset=".7" stop-color="#8f7bff" stop-opacity=".7"/><stop offset="1" stop-color="#9aa6ff" stop-opacity="0"/></linearGradient>
+        <linearGradient id="sk2" x1="0" x2="1" y1="0" y2="0"><stop offset="0" stop-color="#6f7dff" stop-opacity="0"/><stop offset=".5" stop-color="#b7a8ff" stop-opacity=".75"/><stop offset="1" stop-color="#6f7dff" stop-opacity="0"/></linearGradient>
+      </defs>
+      <g class="sk-a">
+        <path d="M-100,620 C200,380 420,820 760,560 C1080,310 1260,640 1700,300" fill="none" stroke="url(#sk2)" stroke-width="46" opacity=".16"/>
+        <path d="M-100,620 C200,380 420,820 760,560 C1080,310 1260,640 1700,300" fill="none" stroke="url(#sk1)" stroke-width="3"/>
+        <path d="M-100,650 C220,420 440,850 780,590 C1100,340 1280,670 1700,330" fill="none" stroke="url(#sk1)" stroke-width="1.4" opacity=".8"/>
+        <path d="M-100,690 C240,470 460,880 800,630 C1120,390 1300,700 1700,370" fill="none" stroke="url(#sk2)" stroke-width="1" opacity=".7"/>
+      </g>
+      <g class="sk-b">
+        <path d="M-100,200 C260,40 520,420 900,220 C1200,60 1400,300 1700,120" fill="none" stroke="url(#sk2)" stroke-width="60" opacity=".12"/>
+        <path d="M-100,200 C260,40 520,420 900,220 C1200,60 1400,300 1700,120" fill="none" stroke="url(#sk1)" stroke-width="2.4"/>
+        <path d="M-100,236 C280,90 540,460 920,262 C1220,100 1420,340 1700,160" fill="none" stroke="url(#sk1)" stroke-width="1.2" opacity=".75"/>
+        <path d="M-100,270 C300,130 560,490 940,300 C1240,140 1440,370 1700,200" fill="none" stroke="url(#sk2)" stroke-width="1" opacity=".6"/>
+      </g>
+    </svg>
+    <div class="wave w3">
+      <svg viewBox="0 0 2400 400" preserveAspectRatio="none">
+        <defs>
+          <linearGradient id="wg3" x1="0" x2="1" y1="0" y2="0">
+            <stop offset="0" style="stop-color:var(--wave2);stop-opacity:0"/>
+            <stop offset=".5" style="stop-color:var(--wave1);stop-opacity:.9"/>
+            <stop offset="1" style="stop-color:var(--wave2);stop-opacity:0"/>
+          </linearGradient>
+        </defs>
+        <path d="M0,160 C300,40 900,280 1200,160 C1500,40 2100,280 2400,160" fill="none" stroke="url(#wg3)" stroke-width="2" vector-effect="non-scaling-stroke"/>
+        <path d="M0,190 C300,80 900,300 1200,190 C1500,80 2100,300 2400,190" fill="none" stroke="url(#wg3)" stroke-width="1" vector-effect="non-scaling-stroke"/>
+      </svg>
+    </div>
+    <div class="wave w2">
+      <svg viewBox="0 0 2400 400" preserveAspectRatio="none">
+        <defs>
+          <linearGradient id="wg2" x1="0" x2="1" y1="0" y2="0">
+            <stop offset="0" style="stop-color:var(--wave1);stop-opacity:.1"/>
+            <stop offset=".5" style="stop-color:var(--wave2);stop-opacity:.95"/>
+            <stop offset="1" style="stop-color:var(--wave1);stop-opacity:.1"/>
+          </linearGradient>
+        </defs>
+        <path d="M0,230 C300,120 900,340 1200,230 C1500,120 2100,340 2400,230" fill="none" stroke="url(#wg2)" stroke-width="3" vector-effect="non-scaling-stroke"/>
+        <path d="M0,250 C300,150 900,350 1200,250 C1500,150 2100,350 2400,250" fill="none" stroke="url(#wg2)" stroke-width="1.5" vector-effect="non-scaling-stroke"/>
+        <path d="M0,270 C300,190 900,360 1200,270 C1500,190 2100,360 2400,270" fill="none" stroke="url(#wg2)" stroke-width="1" vector-effect="non-scaling-stroke"/>
+      </svg>
+    </div>
+    <div class="wave w1">
+      <svg viewBox="0 0 2400 400" preserveAspectRatio="none">
+        <defs>
+          <linearGradient id="wg1" x1="0" x2="1" y1="0" y2="0">
+            <stop offset="0" style="stop-color:var(--wave2);stop-opacity:.15"/>
+            <stop offset=".5" style="stop-color:#ffffff;stop-opacity:.95"/>
+            <stop offset="1" style="stop-color:var(--wave1);stop-opacity:.15"/>
+          </linearGradient>
+          <linearGradient id="wf1" x1="0" x2="0" y1="0" y2="1">
+            <stop offset="0" style="stop-color:var(--wave1);stop-opacity:.22"/>
+            <stop offset="1" style="stop-color:var(--wave1);stop-opacity:0"/>
+          </linearGradient>
+          <filter id="glow" x="-5%" y="-30%" width="110%" height="160%">
+            <feGaussianBlur stdDeviation="6"/>
+          </filter>
+        </defs>
+        <path d="M0,260 C300,150 900,370 1200,260 C1500,150 2100,370 2400,260 L2400,400 L0,400 Z" fill="url(#wf1)"/>
+        <path d="M0,260 C300,150 900,370 1200,260 C1500,150 2100,370 2400,260" fill="none" stroke="var(--wave1)" stroke-width="8" filter="url(#glow)" opacity=".8" vector-effect="non-scaling-stroke"/>
+        <path d="M0,260 C300,150 900,370 1200,260 C1500,150 2100,370 2400,260" fill="none" stroke="url(#wg1)" stroke-width="2.5" vector-effect="non-scaling-stroke"/>
+        <path d="M0,285 C300,200 900,380 1200,285 C1500,200 2100,380 2400,285" fill="none" stroke="url(#wg1)" stroke-width="1.2" vector-effect="non-scaling-stroke"/>
+      </svg>
+    </div>
+  </div>
+
+  <!-- Кнопки окна -->
+  <div id="winctl" class="winctl">
+    <button data-win="full" title="Во весь экран (Alt+Enter)"><svg viewBox="0 0 24 24"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg></button>
+    <button data-win="min" title="Свернуть"><svg viewBox="0 0 24 24"><path d="M5 12h14"/></svg></button>
+    <button data-win="max" title="Развернуть"><svg viewBox="0 0 24 24"><rect x="5.5" y="5.5" width="13" height="13" rx="1"/></svg></button>
+    <button data-win="close" title="Закрыть" class="close"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+  </div>
+
+  <!-- Экран входа -->
+  <div id="login" class="login-screen">
+    <div class="login-card glass">
+      <div class="login-logo">
+        <svg viewBox="0 0 24 24" class="star"><path d="M12 2l2.4 7.6L22 12l-7.6 2.4L12 22l-2.4-7.6L2 12l7.6-2.4z"/></svg>
+        <span>Life Owl</span>
+      </div>
+      <p class="login-sub">Маленькие шаги приводят к большим результатам</p>
+      <label class="fld"><span>Имя пользователя</span><input id="lg-user" type="text" maxlength="32" autocomplete="off"></label>
+      <label class="fld"><span>Пароль</span><input id="lg-pass" type="password" maxlength="64" autocomplete="off"></label>
+      <div id="lg-err" class="err"></div>
+      <button class="cloud-link" data-action="cloud-cfg" id="cloud-link">☁ Синхронизация: выключена</button>
+      <div class="login-actions">
+        <button id="btn-login" class="btn-primary">Войти</button>
+        <button id="btn-register" class="btn-soft">Зарегистрироваться</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Приложение -->
+  <div id="app" class="app hidden">
+    <aside class="sidebar glass">
+      <div class="logo">
+        <svg viewBox="0 0 24 24" class="star"><path d="M12 2l2.4 7.6L22 12l-7.6 2.4L12 22l-2.4-7.6L2 12l7.6-2.4z"/></svg>
+        <span>Life Owl</span>
+      </div>
+      <nav id="nav" class="nav"></nav>
+      <div class="nav-foot"><svg viewBox="0 0 24 24" class="star sm"><path d="M12 2l2.4 7.6L22 12l-7.6 2.4L12 22l-2.4-7.6L2 12l7.6-2.4z"/></svg><span>Большие цели начинаются с маленьких шагов.</span></div>
+    </aside>
+    <main class="main">
+      <header class="topbar">
+        <div class="help-wrap"><button id="help-btn" class="help-btn" data-action="help-toggle" title="Инструкция">?</button><div id="help-pop" class="help-pop glass"></div></div>
+        <div class="streak-wrap">
+          <button id="streak-chip" class="streak-chip" data-action="open-calendar" title="Серия дней"></button>
+          <div id="streak-pop" class="streak-pop glass"></div>
+        </div>
+        <div class="prof-wrap"><button id="avatar" class="avatar" data-action="prof-toggle" title="Профиль"></button><div id="prof-pop" class="prof-pop glass"></div></div>
+      </header>
+      <section id="view" class="view"></section>
+    </main>
+  </div>
+
+  <input id="file-model" type="file" accept="image/png,image/webp,image/svg+xml,image/jpeg" class="hidden">
+  <input id="file-avatar" type="file" accept="image/*" class="hidden">
+  <input id="file-bg" type="file" accept="image/*" class="hidden">
+  <div id="modal" class="modal"></div>
+  <div id="toast" class="toast"></div>
+
+  <script src="config.js"></script>
+  <script src="i18n.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

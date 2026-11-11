@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#101654"/><stop offset=".55" stop-color="#0a0e3a"/><stop offset="1" stop-color="#04061a"/>
+    </linearGradient>
+    <radialGradient id="g1" cx=".25" cy=".2" r=".7"><stop offset="0" stop-color="#6f7dff" stop-opacity=".55"/><stop offset="1" stop-color="#6f7dff" stop-opacity="0"/></radialGradient>
+    <radialGradient id="g2" cx=".85" cy=".9" r=".6"><stop offset="0" stop-color="#b25cff" stop-opacity=".5"/><stop offset="1" stop-color="#b25cff" stop-opacity="0"/></radialGradient>
+    <linearGradient id="glass" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#ffffff" stop-opacity=".22"/><stop offset="1" stop-color="#ffffff" stop-opacity=".04"/>
+    </linearGradient>
+    <linearGradient id="rim" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#ffffff" stop-opacity=".7"/><stop offset=".5" stop-color="#9aa6ff" stop-opacity=".15"/><stop offset="1" stop-color="#c9a8ff" stop-opacity=".5"/>
+    </linearGradient>
+    <linearGradient id="neon" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#9fb0ff"/><stop offset=".5" stop-color="#8a7bff"/><stop offset="1" stop-color="#d09cff"/>
+    </linearGradient>
+    <filter id="blur" x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur stdDeviation="14"/></filter>
+    <clipPath id="clip"><rect x="16" y="16" width="480" height="480" rx="112"/></clipPath>
+  </defs>
+  <rect x="16" y="16" width="480" height="480" rx="112" fill="url(#bg)"/>
+  <g clip-path="url(#clip)">
+    <rect width="512" height="512" fill="url(#g1)"/><rect width="512" height="512" fill="url(#g2)"/>
+    <path d="M-20 380 C 100 300, 220 440, 340 360 S 480 330, 540 360" fill="none" stroke="#8fa0ff" stroke-width="4" opacity=".55"/>
+    <path d="M-20 410 C 120 340, 240 460, 360 390 S 480 370, 540 395" fill="none" stroke="#c9a8ff" stroke-width="2.5" opacity=".4"/>
+  </g>
+  <rect x="86" y="86" width="340" height="340" rx="84" fill="url(#glass)" stroke="url(#rim)" stroke-width="3"/>
+  <path d="M196 148 V 342 H 332" fill="none" stroke="url(#neon)" stroke-width="44" stroke-linecap="round" stroke-linejoin="round" filter="url(#blur)" opacity=".9"/>
+  <path d="M196 148 V 342 H 332" fill="none" stroke="url(#neon)" stroke-width="38" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M196 148 V 342 H 332" fill="none" stroke="#ffffff" stroke-width="8" stroke-linecap="round" stroke-linejoin="round" opacity=".55" transform="translate(-6 -2)"/>
+  <path d="M356 132 l11 34 34 11 -34 11 -11 34 -11 -34 -34 -11 34 -11z" fill="#ffffff" filter="url(#blur)" opacity=".7"/>
+  <path d="M356 132 l11 34 34 11 -34 11 -11 34 -11 -34 -34 -11 34 -11z" fill="#ffffff"/>
+</svg>
