@@ -1,3 +1,3 @@
 /* Адрес сервера синхронизации (после размещения сервера впиши сюда, например 'https://life-owl.onrender.com').
    Пусто — приложение работает локально; адрес можно также указать на экране входа («☁ Сервер»). */
-window.LIFEOWL_SERVER = '';
+window.LIFEOWL_SERVER = 'https://life-owl.onrender.com';
