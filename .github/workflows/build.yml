@@ -43,6 +43,7 @@ jobs:
         run: |
           npm install
           npx cap add android
+          python ../mobile/patch_android.py || python patch_android.py
           npm install --no-save @capacitor/assets@3.0.5
           npx capacitor-assets generate --android || echo "иконки: используется стандартная"
           npx cap sync android

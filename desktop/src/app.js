@@ -986,7 +986,7 @@
     var m = MODELS[k] || '<img src="' + byId(S.models, k).data + '" alt="">';
     return '<div class="model">' + m + '</div>';
   }
-    var LROW = 54, LGAP = 10;
+    var RS = (parseFloat(getComputedStyle(document.documentElement).fontSize) || 16) / 16, LROW = Math.round(54 * RS), LGAP = Math.round(10 * RS);
   var LAY_DEF = { hero: { x: 0, y: 0, w: 12, h: 4 }, tasks: { x: 0, y: 4, w: 8, h: 8 }, msg: { x: 8, y: 4, w: 4, h: 3 }, add: { x: 8, y: 7, w: 4, h: 2 }, kpd: { x: 8, y: 9, w: 4, h: 3 } };
   var LAY_MIN = { hero: [3, 2], tasks: [3, 3], msg: [2, 1], add: [2, 1], kpd: [2, 2] };
   function layItems() {
@@ -1455,12 +1455,7 @@
       '<section class="glass keys"><h3>Ключевая статистика</h3><div class="key-row">' +
       '<div class="key"><span class="k-ic fire">' + FLAME('mini') + '</span><div><b>' + si.streak + '</b><small>дней серии</small></div></div>' +
       '<div class="key"><span class="k-ic">' + ic('check') + '</span><div><b>' + tt.count + '</b><small>выполненных действий</small></div></div></div></section>' +
-      '<section class="glass fair"><h3>Как считается честно</h3><ul class="fair-l">' +
-      '<li><b>Заметки:</b> от 20 символов и 3 слов (или с рисунком); одинаковый текст — один раз; зачёт не чаще раза в ' + NOTE_GAP + ' мин.</li>' +
-      '<li><b>Время с собой:</b> копится только пока ты что-то делаешь в приложении; 2 минуты без действий — пауза.</li>' +
-      '<li><b>Действия и проекты:</b> закрытое в первые ' + QUICK_SEC + ' с после создания очков не даёт; одинаковые за день считаются один раз.</li>' +
-      '<li><b>Привычки:</b> отметка за прошлый день сохраняется в истории, но очки КПД не приносит.</li>' +
-      '<li><b>Избранное:</b> считаются только засчитанные заметки.</li></ul></section></div>';
+      '</div>';
   }
   function kpdUpdateChart() {
     var s = kpdSeries();
@@ -1867,12 +1862,25 @@
     var tabs = [['all', 'Все'], ['pin', 'Закреплённые'], ['fav', 'Избранные']].map(function (x) { return '<button class="tab sm ' + (f === x[0] ? 'on' : '') + '" data-action="n3-filter" data-f="' + x[0] + '">' + x[1] + ' <em>' + cnt[x[0]] + '</em></button>'; }).join('');
     var feed = list.length ? list.map(noteCard).join('') : '<div class="nm-empty"><div class="ne-ico">' + ic('chat') + '</div><b>Здесь пока пусто</b><span>Напиши мысль, нарисуй что-нибудь или отметь заметку.</span></div>';
     var N = UI.n3 || (UI.n3 = Object.assign({ fav: false, pin: false, draw: false, color: DRAW_COLS[0], size: 6, drawn: false, brush: 'pencil', paper: 'dark', half: false, drawData: '', textDraft: '' }, S.draft || {}));
-    return '<div class="notes3"><div class="n3-main"><div class="glass composer3"><textarea id="n3-text" rows="3" maxlength="6000" placeholder="О чём ты думаешь? Любой текст, мысль, цитата…">' + esc(N.textDraft || '') + '</textarea>' +
+    return '<div class="notes3"><div class="n3-main"><div class="glass composer3' + (UI.n3full ? ' full' : '') + '"><div class="n3-fh"><button class="btn-soft sm" data-action="n3-full-off">← Свернуть</button><b>Новая заметка</b><button class="btn-primary sm" data-action="n3-save">Сохранить</button></div><textarea id="n3-text" rows="3" maxlength="6000" placeholder="О чём ты думаешь? Любой текст, мысль, цитата…">' + esc(N.textDraft || '') + '</textarea>' +
       (N.drawData ? '<div class="n3-prev"><img src="' + N.drawData + '" alt=""><div><button class="btn-soft sm" data-action="dr-open">Изменить рисунок</button><button class="btn-soft sm" data-action="dr-remove">Убрать</button></div></div>' : '') +
-      '<div class="n3-foot"><button class="chip-t ' + (N.drawData ? 'on' : '') + '" data-action="dr-open">✎ Рисунок</button><button class="chip-t ' + (N.fav ? 'on' : '') + '" data-action="n3-fav">♥ В избранное</button><button class="chip-t ' + (N.pin ? 'on' : '') + '" data-action="n3-pin-new">📌 Закрепить</button>' +
+      '<div class="n3-foot"><button class="chip-t" data-action="n3-full-on">⤢ На весь экран</button><button class="chip-t ' + (N.drawData ? 'on' : '') + '" data-action="dr-open">✎ Рисунок</button><button class="chip-t ' + (N.fav ? 'on' : '') + '" data-action="n3-fav">♥ В избранное</button><button class="chip-t ' + (N.pin ? 'on' : '') + '" data-action="n3-pin-new">📌 Закрепить</button>' +
       '<button class="btn-primary" data-action="n3-save">Сохранить заметку</button></div></div>' +
       '<div class="n3-bar"><div class="tabs sm">' + tabs + '</div><div class="tabs sm"><button class="tab sm" data-action="n3-all" data-o="0">▴ Свернуть все</button><button class="tab sm" data-action="n3-all" data-o="1">▾ Развернуть все</button></div></div><div class="n3-feed">' + feed + '</div></div>' +
       '<aside class="n3-side">' + talkCard() + '<div class="glass n3-stats"><div><b>' + S.notes.length + '</b><small>' + plural(S.notes.length, ['заметка', 'заметки', 'заметок']) + '</small></div><div><b>' + cnt.pin + '</b><small>закреплено</small></div><div><b>' + cnt.fav + '</b><small>в избранном</small></div></div></aside></div>';
+  }
+  /* полноэкранный редактор заметки */
+  function noteEditor(o) {
+    var old = $('#ned'); if (old) old.remove();
+    var el = document.createElement('div'); el.id = 'ned'; el.className = 'ned';
+    el.innerHTML = '<div class="ned-card"><div class="ned-bar"><button class="btn-soft sm" data-ned="x">← Назад</button><b>' + esc(o.title) + '</b><span class="ned-cnt"></span><button class="btn-primary sm" data-ned="ok">Сохранить</button></div><textarea class="ned-ta" maxlength="6000" placeholder="' + esc(o.ph || '') + '">' + esc(o.value || '') + '</textarea></div>';
+    document.body.appendChild(el); document.body.classList.add('n3-fs');
+    var ta = el.querySelector('textarea'), cnt = el.querySelector('.ned-cnt');
+    function upd() { var w = (ta.value.trim().match(/\S+/g) || []).length; cnt.textContent = ta.value.length + ' зн. · ' + w + ' сл.'; } upd(); ta.addEventListener('input', upd);
+    function close() { el.classList.remove('in'); document.body.classList.remove('n3-fs'); setTimeout(function () { el.remove(); }, 300); }
+    el.addEventListener('click', function (e) { var b = e.target.closest('[data-ned]'); if (!b) return; if (b.getAttribute('data-ned') === 'x') { close(); return; } if (o.onSave(ta.value) !== false) close(); });
+    el.addEventListener('keydown', function (e) { if (e.key === 'Escape') close(); if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') { if (o.onSave(ta.value) !== false) close(); } });
+    requestAnimationFrame(function () { el.classList.add('in'); ta.focus(); ta.setSelectionRange(ta.value.length, ta.value.length); });
   }
   var VIEWS = { profile: viewProfile, today: viewToday, motiv: viewNotes3, notes: viewNotes3, projects: viewProjects, habits: viewHabits, kpd: viewKpd, settings: viewSettings };
   function render() {
@@ -2315,7 +2323,7 @@
     'set-s': function (el) {
       S.settings[el.getAttribute('data-k')] = el.getAttribute('data-s'); applySettings(); save(); render();
     },
-    'lay-edit': function () { var L = S.settings.layout; L.custom = true; L.items = layItems(); UI.layEdit = true; save(); render(); },
+    'lay-edit': function () { var L = S.settings.layout; L.custom = true; L.items = layItems(); UI.layEdit = true; save(); render(); var vw = $('#view'); if (vw) vw.scrollTop = 0; },
     'lay-done': function () { UI.layEdit = false; render(); },
     'lay-reset': function () { S.settings.layout = { custom: false, items: {}, hidden: [] }; UI.layEdit = false; save(); render(); },
     'lay-hide': function (el) { var L = S.settings.layout, b = el.getAttribute('data-b'); if (L.hidden.indexOf(b) < 0) L.hidden.push(b); save(); render(); },
@@ -2366,7 +2374,7 @@
       var warn = !noteValid({ text: text, draw: draw }) ? 'Заметка сохранена, но короче 20 символов — очки КПД не начисляются' : '';
       var now = new Date(), before = dayStats(today()).total, nt = { id: uid(), date: today(), cdate: today(), at: now.getTime(), time: pad(now.getHours()) + ':' + pad(now.getMinutes()), text: text, draw: draw, pinned: N.pin, liked: N.fav };
       if (N.pin || N.fav) nt.markDate = today();
-      S.notes.push(nt); N.fav = false; N.pin = false; N.drawn = false; N.draw = false; N.drawData = ''; N.textDraft = ''; S.draft = null; save();
+      UI.n3full = false; document.body.classList.remove('n3-fs'); S.notes.push(nt); N.fav = false; N.pin = false; N.drawn = false; N.draw = false; N.drawData = ''; N.textDraft = ''; S.draft = null; save();
       var gain = dayStats(today()).total - before; render(); if (warn) toast(warn); else if (gain <= 0 && noteValid(nt)) toast('Заметка сохранена. Очки: одна зачтённая заметка раз в ' + NOTE_GAP + ' мин, дубли не считаются'); else gainToast('Заметка сохранена!', gain);
     },
     'n3-toggle': function (el) { var n = byId(S.notes, el.getAttribute('data-id')); if (!n) return; n.open = !noteOpen(n); save(); render(); },
@@ -2374,15 +2382,15 @@
     'n3-like': function (el) { var n = byId(S.notes, el.getAttribute('data-id')); if (!n) return; var b = dayStats(today()).total; n.liked = !n.liked; if ((n.liked || n.pinned) && !n.markDate) n.markDate = today(); save(); var g = dayStats(today()).total - b; render(); if (n.liked && g) gainToast('В избранном!', g); },
     'n3-pin': function (el) { var n = byId(S.notes, el.getAttribute('data-id')); if (!n) return; var b = dayStats(today()).total; n.pinned = !n.pinned; if ((n.liked || n.pinned) && !n.markDate) n.markDate = today(); save(); var g = dayStats(today()).total - b; render(); if (n.pinned && g) gainToast('Закреплено!', g); },
     'n3-del': function (el) { var id = el.getAttribute('data-id'); confirmBox('Удалить эту заметку?', function () { S.notes = S.notes.filter(function (n) { return n.id !== id; }); save(); render(); }); },
+    'n3-full-on': function () { var t = $('#n3-text'); UI.n3full = true; var c = $('.composer3'); if (c) c.classList.add('full'); document.body.classList.add('n3-fs'); if (t) setTimeout(function () { t.focus(); }, 60); },
+    'n3-full-off': function () { UI.n3full = false; var c = $('.composer3'); if (c) c.classList.remove('full'); document.body.classList.remove('n3-fs'); var t = $('#n3-text'); if (t) t.blur(); },
     'n3-append': function (el) {
       var n = byId(S.notes, el.getAttribute('data-id')); if (!n) return;
-      formModal({ title: 'Дополнить заметку', values: {}, fields: [{ key: 'text', label: 'Новые мысли', type: 'textarea', required: true, max: 3000 }],
-        onSubmit: function (v) { var d = new Date(); n.text = (n.text ? n.text + '\n\n' : '') + v.text; n.edited = pad(d.getHours()) + ':' + pad(d.getMinutes()) + ', ' + fmtLong(today()); save(); render(); } });
+      noteEditor({ title: 'Дополнить заметку', value: '', ph: 'Новые мысли…', onSave: function (t) { t = t.trim(); if (!t) return false; var d = new Date(); n.text = (n.text ? n.text + '\n\n' : '') + t; n.edited = pad(d.getHours()) + ':' + pad(d.getMinutes()) + ', ' + fmtLong(today()); save(); render(); } });
     },
     'n3-edit': function (el) {
       var n = byId(S.notes, el.getAttribute('data-id')); if (!n) return;
-      formModal({ title: 'Редактировать заметку', values: { text: n.text || '' }, fields: [{ key: 'text', label: 'Текст', type: 'textarea', max: 6000 }],
-        onSubmit: function (v) { var t = (v.text || '').trim(); if (!t && !n.draw) { toast('Заметка не может быть пустой'); return false; } if (t === (n.text || '')) return; var d = new Date(); n.text = t; n.edited = pad(d.getHours()) + ':' + pad(d.getMinutes()) + ', ' + fmtLong(today()); save(); render(); } });
+      noteEditor({ title: 'Заметка', value: n.text || '', ph: 'Текст заметки…', onSave: function (t) { t = t.trim(); if (!t && !n.draw) { toast('Заметка не может быть пустой'); return false; } if (t === (n.text || '')) return; var d = new Date(); n.text = t; n.edited = pad(d.getHours()) + ':' + pad(d.getMinutes()) + ', ' + fmtLong(today()); save(); render(); } });
     },
     'talk-toggle': function () { UI.talkPaused = !UI.talkPaused; talkSync(); talkPaint(); },
     'styles-open': function () { stylesModal(); },
@@ -2695,6 +2703,7 @@
     if (e.target.id !== 'dr-file' || !DR) return; var f = e.target.files && e.target.files[0]; e.target.value = ''; if (!f) return;
     var rd = new FileReader(); rd.onload = function () { drFloatStart(rd.result); }; rd.readAsDataURL(f);
   });
+  document.addEventListener('focusin', function (e) { if (e.target.id === 'n3-text' && window.matchMedia('(pointer: coarse)').matches && !UI.n3full) H['n3-full-on'](); });
   var OD = null;
   document.addEventListener('pointerdown', function (e) {
     if (!UI.layEdit || !S || e.button > 0 || e.target.closest('.ov-x')) return;

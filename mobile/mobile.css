@@ -1,125 +1,76 @@
-/* ===== Мобильный слой v2.1 (всё в rem: масштаб интерфейса работает) ===== */
-:root { --sat: env(safe-area-inset-top, 0px); --sab: env(safe-area-inset-bottom, 0px); }
-html { font-size: 16px; -webkit-text-size-adjust: 100%; }
-html, body { height: 100%; overflow: hidden; -webkit-tap-highlight-color: transparent; overscroll-behavior: none; }
+/* ===== Мобильный слой v3: ГОРИЗОНТАЛЬНЫЙ, интерфейс как на ПК, всё в rem ===== */
+:root { --sat: env(safe-area-inset-top, 0px); --sab: env(safe-area-inset-bottom, 0px); --sal: env(safe-area-inset-left, 0px); --sar: env(safe-area-inset-right, 0px); }
+html, body { height: 100%; overflow: hidden; -webkit-tap-highlight-color: transparent; overscroll-behavior: none; -webkit-text-size-adjust: 100%; touch-action: manipulation; }
 body { font-size: .9375rem; }
-.winctl, .lay-bar, [data-action="lay-edit"], .ov, .lb-bar, .lb-rs, .cmp-hint, .sidebar { display: none !important; }
-.app { display: flex !important; flex-direction: column; grid-template-columns: none; gap: 0; padding: 0 .875rem; height: 100dvh; max-width: 46rem; margin: 0 auto; }
-.main { flex: 1; min-height: 0; display: flex; flex-direction: column; }
-.topbar { height: auto; padding: calc(var(--sat) + .75rem) 0 .75rem; gap: .625rem; justify-content: flex-end; -webkit-app-region: no-drag; flex-wrap: nowrap; }
-.m-logo { display: flex; align-items: center; gap: .5rem; margin-right: auto; font-weight: 800; font-size: 1.05rem; }
-.m-logo .star { width: 1.5rem; height: 1.5rem; fill: var(--acc1); }
-.help-btn { width: 2.5rem; height: 2.5rem; }
-.streak-chip { padding: .4rem .9rem .4rem .6rem; }
-.avatar { width: 2.5rem; height: 2.5rem; }
-.view { flex: 1; padding: .25rem .125rem calc(var(--sab) + 5rem); -webkit-overflow-scrolling: touch; overscroll-behavior: contain; }
-/* боковая навигация (три точки справа) */
-#mfab { position: fixed; right: 0; top: 46%; z-index: 55; width: 1.875rem; height: 3.5rem; align-items: center; justify-content: center; border-radius: 1.25rem 0 0 1.25rem; border-right: 0; background: rgba(40,46,110,.55); -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px); border: 1px solid var(--border); box-shadow: 0 .25rem 1rem rgba(0,0,12,.35); color: var(--text); }
-#mfab svg { width: 1.4rem; height: 1.4rem; fill: currentColor; }
-#mside { position: fixed; inset: 0; z-index: 70; background: rgba(2,3,14,0); pointer-events: none; transition: background .3s ease-in-out; }
-#mside.open { background: rgba(2,3,14,.55); pointer-events: auto; }
-.ms-panel { position: absolute; right: 0; top: 0; bottom: 0; width: min(18rem, 82vw); padding: calc(var(--sat, 0px) + 1rem) .875rem calc(var(--sab) + 1rem); display: flex; flex-direction: column; gap: .5rem; overflow-y: auto; border-radius: 1.75rem 0 0 1.75rem; background: rgba(22,26,70,.72); -webkit-backdrop-filter: blur(22px); backdrop-filter: blur(22px); border: 1px solid var(--border); border-right: 0; box-shadow: -.5rem 0 2rem rgba(0,0,12,.4); transform: translateX(105%); transition: transform .3s ease-in-out; }
-#mside.open .ms-panel { transform: none; }
-body[data-bg="light-matte"] .ms-panel { background: rgba(246,247,255,.82); }
-body[data-bg="light-matte"] #mfab { background: rgba(255,255,255,.75); }
-.ms-h { font-weight: 800; font-size: 1.2rem; padding: .25rem .5rem .5rem; }
-.ms-sep { height: 1px; background: var(--border); margin: .25rem .5rem; }
-.ms-b { display: flex; align-items: center; gap: .875rem; padding: .875rem 1rem; border-radius: 1.125rem; background: rgba(255,255,255,.06); border: 1px solid var(--border); color: var(--text); font-weight: 600; font-size: 1.02rem; text-align: left; }
-.ms-b i { font-style: normal; font-size: 1.35rem; width: 1.75rem; text-align: center; }
-.ms-b.on { background: linear-gradient(135deg, var(--acc1), var(--acc2)); color: #fff; border-color: transparent; }
-body[data-bg="light-matte"] .ms-b { background: rgba(255,255,255,.7); }
-/* заголовки и вкладки */
-.page-head { flex-wrap: wrap; gap: .75rem; margin-bottom: 1rem; }
-.page-head .title, h1.title { font-size: 1.75rem; }
-.page-ico { width: 3rem; height: 3rem; }
-.tabs, .plan-tabs, .tabs.sm { display: flex; flex-wrap: nowrap; overflow-x: auto; gap: .5rem; max-width: 100%; padding-bottom: .25rem; scrollbar-width: none; }
-.tabs::-webkit-scrollbar { display: none; }
-.tab { flex: none; white-space: nowrap; padding: .625rem 1rem; min-height: 2.5rem; }
-.hello { font-size: 3.2rem; }
-/* сетки: одна колонка, нормальные отступы */
-.today-grid, .proj-grid, .pd-mid, .pd-bot, .notes2, .notes3, .set-grid, .rep-cols, .key-row, .hab-grid, .kpd-grid { display: flex !important; flex-direction: column; gap: 1rem; grid-template-columns: none !important; }
-.hab-grid > *, .kpd-grid > * { grid-area: auto !important; }
-.glass { border-radius: 1.5rem; }
-.pd-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: .625rem; }
-.b-list { display: grid; grid-template-columns: 1fr !important; gap: .75rem; }
-.arch-cols { grid-template-columns: 1fr 1fr; gap: .75rem; }
-.mv-grid, .mv-plate .mv-grid { display: grid; grid-template-columns: 1fr !important; }
-.mv-card { grid-template-columns: minmax(0, 1fr); }
-.hdays { grid-template-columns: 1fr; }
-.look-row { grid-template-columns: 1fr; gap: .5rem; }
-.rng { grid-template-columns: 6rem 1fr 3rem; gap: .5rem; }
-.icon-grid { grid-template-columns: repeat(6, 1fr); }
-.pcards { max-height: none; overflow: visible; }
-.set-grid { gap: 1rem; margin-top: 1rem; }
-.set { padding: 1.125rem; }
-/* Ежедневник: блоки колонкой */
-.lgrid { height: auto !important; display: flex; flex-direction: column; gap: 1rem; }
-.lb { position: relative !important; left: auto !important; top: auto !important; width: 100% !important; height: auto !important; }
-.lb > * { height: auto; }
-.today-foot { flex-wrap: wrap; gap: .75rem; }
-/* проекты: список → отдельный экран */
-body:not(.m-detail) .proj-right { display: none; }
-body.m-detail .proj-left, body.m-detail .page-head { display: none; }
-.m-back { display: inline-flex; align-items: center; gap: .375rem; padding: .625rem 1rem; margin-bottom: .75rem; border-radius: 1rem; background: rgba(255,255,255,.08); border: 1px solid var(--border); font-weight: 600; }
-.pcard { padding: 1rem; }
-/* заметки */
-.n3-side { order: 0; }
-.composer3 textarea { min-height: 6rem; }
-.n3-foot { flex-wrap: wrap; gap: .5rem; }
-.n3-foot .btn-primary { width: 100%; }
-/* всплывашки */
-.streak-pop, .prof-pop, .help-pop { position: fixed; left: .75rem !important; right: .75rem !important; top: calc(var(--sat) + 4.5rem) !important; width: auto !important; max-height: calc(100dvh - 11rem); z-index: 60; }
-.streak-pop::before { display: none; }
-.modal { z-index: 80; }
-.modal-card, .modal-card.xwide, .modal-card.wide { width: 94vw; max-width: 94vw; max-height: 86dvh; padding: 1.25rem; }
-.sty { grid-template-columns: 1fr; grid-template-rows: auto 1fr; height: calc(86dvh - 7rem); }
-.sty-nav { flex-direction: row; overflow-x: auto; border: 0; padding: 0 0 .5rem; gap: .375rem; }
-.sty-tab { white-space: nowrap; padding: .625rem .875rem; flex: none; }
-.sty-tab i { display: none; }
-.toast { bottom: calc(var(--sab) + 5rem); max-width: 92vw; }
-button, .btn-primary, .btn-soft, .seg-b { min-height: 2.5rem; }
+.winctl, .cmp-hint, #mfab, #mside { display: none !important; }
+/* сетка как на ПК, но компактнее */
+.app { grid-template-columns: 11.5rem 1fr; gap: .75rem; padding: calc(var(--sat) + .5rem) calc(var(--sar) + .6rem) calc(var(--sab) + .5rem) calc(var(--sal) + .5rem); }
+.sidebar { padding: .6rem .5rem; overflow-y: auto; scrollbar-width: none; border-radius: 1.4rem; }
+.sidebar::-webkit-scrollbar { display: none; }
+.brand { padding: .2rem .4rem; }
+.nav { gap: .3rem; padding: .4rem 0; }
+.nav-i { padding: .55rem .7rem; gap: .6rem; font-size: .85rem; border-radius: 1rem; min-height: 2.4rem; }
+.nav-i .svg { width: 1.3rem; height: 1.3rem; }
+.nav-foot { display: none; }
+.topbar { height: auto; padding: 0 0 .5rem; gap: .6rem; -webkit-app-region: no-drag; }
+.help-btn { width: 2.4rem; height: 2.4rem; }
+.avatar { width: 2.4rem; height: 2.4rem; }
+.streak-chip { padding: .35rem .8rem .35rem .5rem; }
+.view { padding: 0 .3rem calc(var(--sab) + 1.2rem) .1rem; -webkit-overflow-scrolling: touch; overscroll-behavior: contain; scrollbar-width: none; }
+.view::-webkit-scrollbar { display: none; }
+.page-head { margin-bottom: .7rem; }
+.page-head .title, h1.title { font-size: 1.55rem; }
+/* пальцем нажимать удобно */
+button, .btn-primary, .btn-soft, .seg-b, .tab, .chip-t, .ico-btn { min-height: 2.3rem; touch-action: manipulation; }
+.ico-btn { min-width: 2.3rem; }
+button:active, .nav-i:active, .tab:active, .row:active { transform: scale(.97); transition: transform .12s ease-in-out; }
 input, textarea, select { font-size: 1rem; }
-.seg { flex-wrap: wrap; }
-.dr-bar { padding: .5rem .625rem; max-height: 46vh; overflow-y: auto; }
-.dr-wrap { margin: .5rem; }
+@media (hover: none) { .nav-i:hover, .tab:hover, .btn-soft:hover, .ico-btn:hover { background: inherit; } }
+/* редактирование блоков и моделек пальцем */
+.lb.edit, .ov.edit, .lb-rs, .ov-rs, .ov-rot, .lb-name { touch-action: none; }
+.lay-bar { top: 0; }
+/* проекты: список слева, карточка справа — как на ПК, но уже */
+.proj-grid { grid-template-columns: 20rem minmax(0, 1fr); }
+.today-grid { grid-template-columns: minmax(0, 1fr) 17rem; }
+.proj-right, .pdet, .proj-left, .today-grid > *, .hab-grid > * { min-width: 0; }
+.nav-foot { display: none !important; }
 .bm-view { touch-action: none; }
-.login-card { width: 92vw; }
-/* v2.1 фиксы переполнений */
-.proj-right, .proj-left, .pdet, .inner, .glass, .lb, .tasks, .set { min-width: 0; max-width: 100%; }
-.pdet svg, .inner svg, .glass svg.chart, svg.chart { max-width: 100%; height: auto; }
-.tasks-head { flex-wrap: wrap; row-gap: .5rem; }
-.tasks-head b { white-space: nowrap; }
-.tasks-head .progress { flex: 1 1 100%; order: 9; width: auto; }
-.model-wrap { width: 9.5rem; max-width: 40%; }
-.pd-head { flex-wrap: wrap; }
-.pd-title h2 { font-size: 1.4rem; word-break: break-word; }
-/* привычки: имя сверху, ряд из 7 кружков ниже */
-.hdays { display: grid; grid-template-columns: repeat(7, 1fr); padding: 0 .75rem; margin: .5rem 0 .25rem; justify-content: stretch; }
-.hdays i { width: auto; }
-.hlist { max-height: none; overflow: visible; gap: .75rem; }
-.hrow { display: grid; grid-template-columns: auto minmax(0, 1fr) auto auto auto; grid-template-areas: "emo hn pct ed dl" "cells cells cells cells cells"; gap: .5rem .5rem; padding: .875rem .75rem; align-items: center; }
-.hrow > .hemo { grid-area: emo; }
-.hrow > .hn { grid-area: hn; }
-.hrow > .pct { grid-area: pct; }
-.hrow > .ico-btn:nth-of-type(1) { grid-area: ed; }
-.hrow > .ico-btn:nth-of-type(2) { grid-area: dl; }
-.hcells { grid-area: cells; display: grid; grid-template-columns: repeat(7, 1fr); }
-.hc { width: 100%; height: 2.5rem; }
-.hc::before { width: 1.875rem; height: 1.875rem; }
-.hm-head { gap: .75rem; flex-wrap: wrap; }
+/* заметки: на всю высоту экрана */
+.notes3 { height: calc(100dvh - 7.5rem) !important; min-height: 0 !important; grid-template-columns: minmax(0, 1fr) 15rem; }
+.n3-side { display: flex; }
+.composer3 textarea { min-height: 3.2rem; }
+/* всплывашки и окна */
+.help-pop, .prof-pop, .streak-pop { max-height: calc(100dvh - 5rem); overflow-y: auto; }
+.modal { z-index: 80; }
+.modal-card, .modal-card.xwide, .modal-card.wide { max-height: calc(100dvh - 1.5rem); overflow-y: auto; }
+.sty { height: calc(100dvh - 8rem); }
+.toast { bottom: calc(var(--sab) + 1.2rem); max-width: 80vw; }
+.login-card { width: min(26rem, 80vw); max-height: 94dvh; overflow-y: auto; }
+/* переходы между разделами: плавный сдвиг ≤ 8px */
+.view.in > * { animation: mvIn .3s ease-in-out both; }
+@keyframes mvIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+/* производительность WebView: слои и дешёвые тени */
+.glass, .row, .hrow, .note3, .pcard, .stat { contain: layout style; }
+.view { will-change: scroll-position; }
+.glass { -webkit-backdrop-filter: none; backdrop-filter: none; }
+body[data-blur="on"] .glass { -webkit-backdrop-filter: blur(.5rem); backdrop-filter: blur(.5rem); }
+body.paused .wave, body.paused .flame, body.paused .flame *, body.paused .silk * { animation-play-state: paused !important; }
+.silk, .bg { transform: translateZ(0); }
+body[data-gfx="3d"] :is(.row, .stat, .hrow, .entry2, .key, .formula, .b-ic, .k-ic, .inner) { box-shadow: 0 .2rem .5rem rgba(0,0,20,.22); }
+/* подсказка: поверни телефон (только в браузере, в apk экран уже горизонтальный) */
+#rot-hint { position: fixed; inset: 0; z-index: 200; display: none; align-items: center; justify-content: center; flex-direction: column; gap: 1rem; text-align: center; padding: 2rem; background: #04061a; color: #fff; font-size: 1.1rem; }
+#rot-hint i { font-style: normal; font-size: 3.4rem; display: block; animation: rotHint 1.6s ease-in-out infinite alternate; }
+@keyframes rotHint { from { transform: rotate(0); } to { transform: rotate(90deg); } }
+@media (orientation: portrait) { #rot-hint.on { display: flex; } }
 
 /* читаемые вкладки и кнопки */
 .tab { color: var(--text); background: rgba(255,255,255,.08); border: 1px solid var(--border); }
 .tab.on { color: #fff; background: linear-gradient(135deg, var(--acc1), var(--acc2)); border-color: transparent; }
 body[data-bg="light-matte"] .tab { background: rgba(255,255,255,.75); }
-.n3-bar { display: flex; flex-direction: column; gap: .5rem; }
-/* строка действия: кнопки на второй строке, ничего не обрезается */
-.row.task { flex-wrap: wrap; row-gap: .375rem; }
-.row.task .txt { flex: 1 1 calc(100% - 7.5rem); min-width: 0; }
-.row.task [data-action="task-sub"] { margin-left: auto; }
-.row.task .ico-btn { width: 2.5rem; height: 2.5rem; }
-.sub-cnt { min-height: 2.5rem; }
-.subs .sub { padding: .375rem 0; }
-.notes3 { height: auto !important; min-height: 0 !important; }
-.n3-main, .n3-feed, .n3-side { flex: none !important; overflow: visible !important; min-height: 0; }
-.n3-feed { padding-right: 0; }
+/* скрываем «объяснялки» — они в панели «Инструкция» */
+.cat-note, .lk-l small, .page-head .sub2, .lay-bar span, .ta-chk small, .set small, .set-row small, .ro-note { display: none !important; }
+/* компактное приветствие и док кнопок на низком экране */
+.hello { font-size: 2.6rem !important; line-height: 1.05; margin: 0 !important; }
+.today .sub, .hello + p, .hello-sub { font-size: .85rem; margin-top: .2rem; }
+.view { padding-bottom: calc(var(--sab) + 4.2rem); }
+.fab-dock { transform: scale(.85); transform-origin: right bottom; bottom: .4rem; }

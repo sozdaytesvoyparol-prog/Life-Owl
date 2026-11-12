@@ -17,15 +17,15 @@ shim=open(os.path.join(ROOT,'shim.js'),encoding='utf-8').read()
 assert '__loBase' in shim
 js=js.replace("window.lifeOwlApi.lastUser().then(","if (window.lifeOwlApi.resume) window.lifeOwlApi.resume().then(function (r) { if (r) enterApp(r); });\n  window.lifeOwlApi.lastUser().then(",1); assert 'resume' in js
 head='''<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover, interactive-widget=resizes-content">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover, interactive-widget=resizes-content">
 <meta name="theme-color" content="#04061a">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Life Owl">
-<title>Life Owl</title>'''
+<title>Life Owl</title>
+<script>(function(){var w=Math.max(innerWidth,innerHeight),b=Math.min(1,Math.max(.78,w/1120));window.__loBase=b;document.documentElement.style.fontSize=(16*b)+'px';})();</script>'''
 body=html[html.index('<body'):html.index('<script src="i18n.js">')]
 body=re.sub(r'<!-- Кнопки окна -->\s*<div id="winctl".*?</div>\s*(?=<!-- Экран входа)','',body,flags=re.S)
-body=body.replace('<header class="topbar">','<header class="topbar"><div class="m-logo"><svg viewBox="0 0 24 24" class="star"><path d="M12 2l2.4 7.6L22 12l-7.6 2.4L12 22l-2.4-7.6L2 12l7.6-2.4z"/></svg><span>Life Owl</span></div>',1)
 out='<!DOCTYPE html>\n<html lang="ru">\n<head>\n'+head+'\n<style>\n'+css+'\n</style>\n</head>\n'+body+'<script>\n'+shim+'\n</script>\n<script>\n'+open(S+'config.js',encoding='utf-8').read()+'\n</script>\n<script>\n'+i18n+'\n</script>\n<script>\n'+js+'\n</script>\n<script>\n'+mjs+'\n</script>\n</body>\n</html>\n'
 os.makedirs(os.path.join(ROOT,'www'),exist_ok=True); open(os.path.join(ROOT,'www','index.html'),'w',encoding='utf-8').write(out); print(len(out))
