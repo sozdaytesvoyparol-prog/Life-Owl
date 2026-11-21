@@ -47,7 +47,6 @@ input, textarea, select { font-size: 1rem; }
 .toast { bottom: calc(var(--sab) + 1.2rem); max-width: 80vw; }
 .login-card { width: min(26rem, 80vw); max-height: 94dvh; overflow-y: auto; }
 /* переходы между разделами: плавный сдвиг ≤ 8px */
-.view.in > * { animation: mvIn .3s ease-in-out both; }
 @keyframes mvIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
 /* производительность WebView: слои и дешёвые тени */
 .glass, .row, .hrow, .note3, .pcard, .stat { contain: layout style; }
@@ -74,3 +73,34 @@ body[data-bg="light-matte"] .tab { background: rgba(255,255,255,.75); }
 .today .sub, .hello + p, .hello-sub { font-size: .85rem; margin-top: .2rem; }
 .view { padding-bottom: calc(var(--sab) + 4.2rem); }
 .fab-dock { transform: scale(.85); transform-origin: right bottom; bottom: .4rem; }
+
+/* ===== 120 fps: только то, что рисует видеокарта (transform/opacity), без перерисовок ===== */
+.bg { animation: none !important; background-size: 100% 100% !important; }
+.silk g { animation: none !important; will-change: auto !important; }
+.silk { animation: silkFloat 40s ease-in-out infinite alternate; will-change: transform; }
+@keyframes silkFloat { from { transform: translate3d(0, 0, 0) scale(1.05); } to { transform: translate3d(-1.2%, .8%, 0) scale(1.07); } }
+.wave { animation-duration: 90s !important; }
+body { text-rendering: optimizeSpeed; }
+.glass, .modal-card, .ms-panel, .toast, .chip, .capsule, .streak-chip { -webkit-backdrop-filter: none !important; backdrop-filter: none !important; }
+.row, .hrow, .note3, .pcard, .ach-c, .tl-row, .hl-row, .nav-i, .tab, .btn-soft, .btn-primary, .chip-t, .ico-btn { transition-property: background-color, border-color, color, opacity, transform; }
+.flame, .flame * { filter: none !important; }
+
+/* ===== v3.1: 120 fps — только композитор, никаких перерисовок на каждый кадр ===== */
+.bg { animation: none !important; background-size: 100% 100% !important; }
+.w2, .w3 { display: none !important; }
+.wave { animation-duration: 90s; }
+.silk { will-change: transform; animation: silkAll 30s ease-in-out infinite alternate; backface-visibility: hidden; }
+.sk-a, .sk-b { animation: none !important; }
+@keyframes silkAll { from { transform: translate3d(-6px, 4px, 0) scale(1.02); } to { transform: translate3d(8px, -5px, 0) scale(1.02); } }
+/* лёгкие тени: большие размытые тени дорого рисуются на Mali/Adreno */
+.glass { box-shadow: 0 .2rem .7rem rgba(0, 0, 14, .28), inset 0 1px 0 rgba(255, 255, 255, .1) !important; }
+.modal-card, .help-pop, .prof-pop, .streak-pop, .menu { box-shadow: 0 .4rem 1.2rem rgba(0, 0, 14, .5) !important; }
+.flame, .c-glow, .flame * { filter: none !important; }
+.flame { will-change: transform; }
+.view.in { animation: viewIn .25s ease-out backwards; }
+
+.nav-i, .tab, .btn-primary, .btn-soft { transition: background-color .2s ease-in-out, color .2s ease-in-out, transform .12s ease-in-out, opacity .2s ease-in-out !important; }
+.row, .hrow, .note3, .pcard, .stat, .ach-c { transition: background-color .2s ease-in-out, opacity .2s ease-in-out, transform .2s ease-in-out !important; }
+.progress i { transition: width .3s ease-in-out !important; }
+body[data-fx="rain"] #snow, body[data-fx="snow"] #snow { opacity: .8; }
+@keyframes viewIn { from { opacity: 0; transform: translate3d(0, .4rem, 0); } to { opacity: 1; transform: none; } }

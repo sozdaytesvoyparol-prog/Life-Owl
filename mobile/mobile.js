@@ -11,14 +11,7 @@
   var hint = document.createElement('div'); hint.id = 'rot-hint'; hint.className = 'on';
   hint.innerHTML = '<i>📱</i><b>Поверни телефон горизонтально</b><span>Life Owl работает в горизонтальном режиме</span>';
   document.body.appendChild(hint);
-  /* анимация перехода при смене раздела */
-  var last = '';
   function cur() { var o = document.querySelector('#nav .nav-i.on'); return o ? o.getAttribute('data-view') : ''; }
-  var view = $('#view');
-  new MutationObserver(function () {
-    var c = cur(); if (c === last) return; last = c;
-    view.classList.remove('in'); void view.offsetWidth; view.classList.add('in');
-  }).observe(view, { childList: true });
   /* системная кнопка «Назад» (Capacitor) и жест назад */
   function back() {
     var ned = $('#ned'); if (ned) { ned.querySelector('[data-ned="x"]').click(); return true; }

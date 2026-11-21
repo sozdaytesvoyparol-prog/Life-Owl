@@ -45,6 +45,7 @@ public class MainActivity extends BridgeActivity {
                 }
                 WindowManager.LayoutParams lp = getWindow().getAttributes();
                 lp.preferredDisplayModeId = best.getModeId();
+                lp.preferredRefreshRate = best.getRefreshRate();
                 getWindow().setAttributes(lp);
             }
         } catch (Throwable ignored) { }
