@@ -97,10 +97,14 @@ body { text-rendering: optimizeSpeed; }
 .modal-card, .help-pop, .prof-pop, .streak-pop, .menu { box-shadow: 0 .4rem 1.2rem rgba(0, 0, 14, .5) !important; }
 .flame, .c-glow, .flame * { filter: none !important; }
 .flame { will-change: transform; }
-.view.nav { animation: viewIn .25s ease-out backwards; }
 
 .nav-i, .tab, .btn-primary, .btn-soft { transition: background-color .2s ease-in-out, color .2s ease-in-out, transform .12s ease-in-out, opacity .2s ease-in-out !important; }
 .row, .hrow, .note3, .pcard, .stat, .ach-c { transition: background-color .2s ease-in-out, opacity .2s ease-in-out, transform .2s ease-in-out !important; }
 .progress i { transition: width .3s ease-in-out !important; }
 body[data-fx="rain"] #snow, body[data-fx="snow"] #snow { opacity: .8; }
 @keyframes viewIn { from { opacity: 0; transform: translate3d(0, .4rem, 0); } to { opacity: 1; transform: none; } }
+
+/* v3.2: кружки не сплющиваются кнопочным min-height */
+:root { --tb: 0px; }
+.sw, .dot, .skin i, .ico-pick, .lb-x, .lb-rs, .ns-card > * { min-height: 0 !important; }
+.sw { width: 2.2rem; height: 2.2rem; } .dot { width: 1.8rem; height: 1.8rem; }
