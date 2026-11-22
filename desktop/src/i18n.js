@@ -2,6 +2,10 @@
 (function () {
   'use strict';
   var D = {
+    'Доска почёта': 'Hall of fame', 'Добавить личное достижение': 'Add personal achievement', 'Новое личное достижение': 'New personal achievement', 'Что ты прошёл? Выбери действия из Ежедневника': 'What did you complete? Pick planner actions', 'Ради чего это было': 'Why you did it', 'Название': 'Title', 'На доску почёта': 'To the hall of fame', 'Доска пока пуста': 'The board is empty', 'Подробнее': 'Details', 'Свернуть': 'Collapse', 'на доске': 'on the board', 'дней дисциплины': 'days of discipline',
+    'Взаимодействие': 'Interaction', 'Проект': 'Project', 'Привычка': 'Habit', '＋ действие': '＋ action', 'привычка': 'habit',
+    'Заметки': 'Notes', 'Тема заметок': 'Notes theme', 'Шрифт': 'Font', 'Стекло': 'Glass', 'Тетрадь': 'Notebook', 'Клетка': 'Grid', 'Крафт': 'Kraft', 'Пергамент': 'Parchment', 'Стикер': 'Sticky', 'Неон': 'Neon', 'Мармелад': 'Jelly', 'Терминал': 'Terminal', 'Сакура': 'Sakura', 'Сияние': 'Aurora', 'Мел': 'Chalk', 'Чернила': 'Ink',
+    'Настройки стиля': 'Style settings', 'Готово': 'Done', 'Текст': 'Text', 'Огонёк': 'Flame', 'Графика': 'Graphics', 'Фон': 'Background', 'Фон приложения': 'App background', 'Оформление фона': 'Background options',
     'Маленькие шаги приводят к большим результатам': 'Small steps lead to big results',
     'Имя пользователя': 'Username', 'Пароль': 'Password', 'Войти': 'Log in', 'Зарегистрироваться': 'Sign up',
     'Ежедневник': 'Daily planner', 'Заметки': 'Notes', 'Проекты': 'Projects', 'Привычки': 'Habits', 'КПД': 'KPI', 'Настройки': 'Settings',

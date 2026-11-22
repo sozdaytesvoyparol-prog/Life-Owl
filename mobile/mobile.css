@@ -97,7 +97,7 @@ body { text-rendering: optimizeSpeed; }
 .modal-card, .help-pop, .prof-pop, .streak-pop, .menu { box-shadow: 0 .4rem 1.2rem rgba(0, 0, 14, .5) !important; }
 .flame, .c-glow, .flame * { filter: none !important; }
 .flame { will-change: transform; }
-.view.in { animation: viewIn .25s ease-out backwards; }
+.view.nav { animation: viewIn .25s ease-out backwards; }
 
 .nav-i, .tab, .btn-primary, .btn-soft { transition: background-color .2s ease-in-out, color .2s ease-in-out, transform .12s ease-in-out, opacity .2s ease-in-out !important; }
 .row, .hrow, .note3, .pcard, .stat, .ach-c { transition: background-color .2s ease-in-out, opacity .2s ease-in-out, transform .2s ease-in-out !important; }

@@ -26,6 +26,6 @@ head='''<meta charset="UTF-8">
 <title>Life Owl</title>
 <script>(function(){var w=Math.max(innerWidth,innerHeight),b=Math.min(1,Math.max(.78,w/1120));window.__loBase=b;document.documentElement.style.fontSize=(16*b)+'px';})();</script>'''
 body=html[html.index('<body'):html.index('<script src="i18n.js">')]
-body=re.sub(r'<!-- Кнопки окна -->\s*<div id="winctl".*?</div>\s*(?=<!-- Экран входа)','',body,flags=re.S)
+body=re.sub(r'<!-- Кнопки окна -->\s*<div id="titlebar".*?</div>\s*</div>\s*(?=<!-- Экран входа)','',body,flags=re.S)
 out='<!DOCTYPE html>\n<html lang="ru">\n<head>\n'+head+'\n<style>\n'+css+'\n</style>\n</head>\n'+body+'<script>\n'+shim+'\n</script>\n<script>\n'+open(S+'config.js',encoding='utf-8').read()+'\n</script>\n<script>\n'+i18n+'\n</script>\n<script>\n'+js+'\n</script>\n<script>\n'+mjs+'\n</script>\n</body>\n</html>\n'
 os.makedirs(os.path.join(ROOT,'www'),exist_ok=True); open(os.path.join(ROOT,'www','index.html'),'w',encoding='utf-8').write(out); print(len(out))

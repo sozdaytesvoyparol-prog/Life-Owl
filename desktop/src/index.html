@@ -13,6 +13,7 @@
   <div class="bg" aria-hidden="true">
     <div id="bg-img" class="bg-img"></div>
     <canvas id="snow" class="snow"></canvas>
+    <div id="fxl" class="fxl" aria-hidden="true"><div class="fxw"><i class="f1"></i><i class="f2"></i></div></div>
     <svg class="silk" viewBox="0 0 1600 900" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
       <defs>
         <linearGradient id="sk1" x1="0" x2="1" y1="0" y2="0"><stop offset="0" stop-color="#9aa6ff" stop-opacity="0"/><stop offset=".35" stop-color="#d6dcff" stop-opacity=".9"/><stop offset=".7" stop-color="#8f7bff" stop-opacity=".7"/><stop offset="1" stop-color="#9aa6ff" stop-opacity="0"/></linearGradient>
@@ -83,11 +84,13 @@
   </div>
 
   <!-- Кнопки окна -->
-  <div id="winctl" class="winctl">
-    <button data-win="full" title="Во весь экран (Alt+Enter)"><svg viewBox="0 0 24 24"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg></button>
-    <button data-win="min" title="Свернуть"><svg viewBox="0 0 24 24"><path d="M5 12h14"/></svg></button>
-    <button data-win="max" title="Развернуть"><svg viewBox="0 0 24 24"><rect x="5.5" y="5.5" width="13" height="13" rx="1"/></svg></button>
-    <button data-win="close" title="Закрыть" class="close"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+  <div id="titlebar" class="titlebar">
+    <div id="winctl" class="winctl">
+      <button data-win="full" title="Во весь экран (Alt+Enter)"><svg viewBox="0 0 24 24"><rect x="3.5" y="5.5" width="17" height="11" rx="1.5"/><path d="M8 20h8M12 16.5V20"/></svg></button>
+      <button data-win="min" title="Свернуть"><svg viewBox="0 0 24 24"><path d="M6 17h12"/></svg></button>
+      <button data-win="max" title="Развернуть"><svg viewBox="0 0 24 24"><rect x="5.5" y="5.5" width="13" height="13" rx="1.5"/></svg></button>
+      <button data-win="close" title="Закрыть" class="close"><svg viewBox="0 0 24 24"><path d="M6.5 6.5l11 11M17.5 6.5l-11 11"/></svg></button>
+    </div>
   </div>
 
   <!-- Экран входа -->
