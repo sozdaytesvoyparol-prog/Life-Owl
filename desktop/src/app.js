@@ -1254,7 +1254,7 @@
     var gtip = sb.mid == null ? 'Золотое время появится после 3 завершённых дней' : 'Золотое время ≈ ' + hhmm(sb.mid) + ': ' + sb.ok + ' из ' + sb.n + ' последних дней в одном окне';
     return '<div class="lad"><div class="lad-top"><b>' + stageLabel(i) + '</b><span>' + (nx ? 'до «' + nx[1] + '»: ' + (nx[0] - st) + ' ' + plural(nx[0] - st, ['день', 'дня', 'дней']) : 'вершина пройдена') + '</span></div>' +
       '<div class="lad-tr"><i class="lad-fill" style="width:' + pos + '%"></i>' + nodes + '<span class="lad-dot" style="left:' + pos + '%" data-tip="' + esc('Ты здесь: ' + st + ' ' + plural(st, ['день', 'дня', 'дней']) + ' подряд') + '">' + FLAME('lad-fl') + '</span></div><div class="lad-lb"><span class="on" style="left:0">0</span>' + lbs + '</div>' +
-      '<div class="gt" data-tip="' + esc(gtip) + '"><span class="gt-ic">⏱</span><b>Золотое время</b><div class="progress sm"><i style="width:' + sb.pct + '%"></i></div><span class="gt-v">' + (sb.mid == null ? '—' : '≈ ' + hhmm(sb.mid)) + '</span></div></div>';
+      '<div class="gt" data-tip="' + esc(gtip) + '"><div class="gt-h"><span class="gt-ic">⏱</span><b>Золотое время</b><span class="gt-v">' + (sb.mid == null ? '—' : '≈ ' + hhmm(sb.mid)) + '</span></div><div class="gt-24"><i style="left:' + (sb.mid == null ? 0 : Math.max(0, (sb.mid - 60) / 14.4)) + '%;width:' + (sb.mid == null ? 0 : 8.33) + '%"></i>' + [0, 6, 12, 18, 24].map(function (h) { return '<u style="left:' + (h / 24 * 100) + '%"></u>'; }).join('') + '</div><div class="gt-ax"><span>0</span><span>6</span><span>12</span><span>18</span><span>24</span></div></div></div>';
   }
   function weekModal() {
     var st = streakInfo().streak, cur = stageOf(st);
@@ -1505,7 +1505,7 @@
       var arr = ACH.filter(function (a) { return a.br === b[0]; }), n = arr.filter(function (a) { return S.ach && S.ach[a.id]; }).length, pc = arr.length ? Math.round(n / arr.length * 100) : 0;
       var rows = order(b[0], null).map(row).join(''); if (!rows) return '';
       var open = f !== 'all' || !!UI.achBr[b[0]];
-      return '<section class="glass ach-br ' + (open ? 'open' : '') + '"><button class="ab-h" data-action="ach-br" data-b="' + b[0] + '"><span class="ab-ic"><svg viewBox="0 0 24 24">' + SVG[ACH_BIC[b[0]] || 'star'] + '</svg></span><h3>' + (en ? b[3] : b[2]) + '</h3><div class="progress sm"><i style="width:' + pc + '%"></i></div><em>' + n + ' / ' + arr.length + '</em><svg class="ab-chev" viewBox="0 0 24 24">' + SVG.chevD + '</svg></button>' +
+      return '<section class="glass ach-br ' + (open ? 'open' : '') + '" data-b="' + b[0] + '"><button class="ab-h" data-action="ach-br" data-b="' + b[0] + '"><span class="ab-ic"><svg viewBox="0 0 24 24">' + SVG[ACH_BIC[b[0]] || 'star'] + '</svg></span><h3>' + (en ? b[3] : b[2]) + '</h3><div class="progress sm"><i style="width:' + pc + '%"></i></div><em>' + n + ' / ' + arr.length + '</em><svg class="ab-chev" viewBox="0 0 24 24">' + SVG.chevD + '</svg></button>' +
         (open ? '<div class="ab-body">' + rows + '</div>' : '') + '</section>';
     }).join('');
     return '<div class="page-head"><span class="page-ico">' + ic('trophy') + '</span><div><h1 class="title">Достижения</h1></div>' +
@@ -1593,7 +1593,7 @@
     UI.hallOpen = UI.hallOpen || {};
     var list = (S.hall || []).slice().sort(function (a, b) { return (b.at || 0) - (a.at || 0); });
     var total = list.reduce(function (t, h) { return t + (h.days || 0); }, 0);
-    hallSync(); list = (S.hall || []).slice().sort(function (a, b) { return (b.at || 0) - (a.at || 0); });
+    hallSync(); list = (S.hall || []).slice().sort(function (a, b) { return ordIdx('hall', a.kind === 'hab' ? 'hab' : 'act') - ordIdx('hall', b.kind === 'hab' ? 'hab' : 'act') || (b.at || 0) - (a.at || 0); });
     total = list.reduce(function (t, h) { return t + hallDays(h); }, 0);
     var cards = list.map(function (h) {
       var open = !!UI.hallOpen[h.id], hb = h.kind === 'hab' ? byId(S.habits, h.hid) : null, days = hallDays(h), bad = hb && hb.type === 'bad';
@@ -1612,18 +1612,64 @@
         (open ? '<div class="hc-more"><small>' + (h.kind === 'hab' ? 'Привычка' : 'Закрытые действия') + '</small>' + (h.names || []).map(function (n) { return '<span>' + esc(n) + '</span>'; }).join('') + '<small>На доске с ' + esc(fmtLong(h.date || today())) + '</small></div>' : '') +
         '<div class="hc-foot"><button class="chip-t sm" data-action="hall-open" data-id="' + h.id + '">' + (open ? 'Свернуть' : 'Подробнее') + '</button>' + foot + '<span></span><button class="ico-btn sm ar-pin' + ((S.profile.show || []).indexOf('h:' + h.id) >= 0 ? ' on' : '') + '" data-action="show-toggle" data-k="h:' + h.id + '" title="В профиль">' + ic('pin') + '</button><button class="ico-btn sm" data-action="hall-edit" data-id="' + h.id + '" title="Изменить">' + ic('pencil') + '</button><button class="ico-btn sm" data-action="hall-del" data-id="' + h.id + '" title="Убрать с доски">' + ic('trash') + '</button></div></article>';
     }).join('');
-    return '<div class="page-head"><span class="page-ico">' + ic('medal') + '</span><div><h1 class="title">Доска почёта</h1></div><button class="btn-primary" data-action="hall-add">Добавить личное достижение</button></div>' +
+    return '<div class="page-head"><span class="page-ico">' + ic('medal') + '</span><div><h1 class="title">Доска почёта</h1></div><div class="hall-hb"><button class="ico-btn ord-b" data-action="ord-open" data-o="hall" title="Порядок">⇅</button><button class="btn-primary" data-action="hall-add">Добавить личное достижение</button></div></div>' +
       '<section class="glass hall-top"><div><b>' + list.length + '</b><small>на доске</small></div><div><b>' + total + '</b><small>дней дисциплины</small></div></section>' +
       (cards ? '<div class="hall-grid">' + cards + '</div>' : '<div class="glass hall-empty"><svg viewBox="0 0 24 24">' + SVG.medal + '</svg><b>Доска пока пуста</b></div>');
   }
   function choiceHtml() {
-    var t = today(), list = (S.choices || []).filter(function (c) { return c.daily || c.date === t; }), cd = S.choiceDay || {};
-    return '<section class="glass choice"><div class="ch-h"><b>Выбор на день</b><button class="chip-t sm" data-action="ch-add">＋ Добавить выбор</button></div>' +
+    var list = (S.choices || []).filter(function (c) { return !c.picked; }); UI.chOpen = UI.chOpen || {};
+    return '<section class="glass choice"><div class="ch-h"><b>Выбор на день</b><button class="chip-t sm" data-action="ch-add">＋ Добавить</button></div>' +
       (list.length ? list.map(function (c) {
-        var pk = cd[c.id] && cd[c.id].date === t ? cd[c.id].idx : -1;
-        return '<div class="ch-card' + (pk >= 0 ? ' done' : '') + '"><div class="ch-q"><span>' + esc(c.title) + '</span><button class="ico-btn sm" data-action="ch-del" data-id="' + c.id + '" title="Удалить">' + ic('trash') + '</button></div><div class="ch-os">' +
-          c.opts.map(function (o, i) { return '<button class="ch-o-b' + (pk === i ? ' on' : '') + '"' + (pk >= 0 ? ' disabled' : '') + ' data-action="ch-pick" data-id="' + c.id + '" data-i="' + i + '"><b>' + esc(o.text) + '</b>' + (o.tm ? '<small>' + esc(o.tm) + '</small>' : '') + (pk === i ? '<i>' + ic('tick') + '</i>' : '') + '</button>'; }).join('') + '</div></div>';
-      }).join('') : '<div class="ch-empty">Два варианта на один слот времени — выбери один, он станет обычным действием дня.</div>') + '</section>';
+        var open = UI.chOpen[c.id] !== false;
+        return '<div class="ch-card' + (open ? ' open' : '') + '"><div class="ch-q"><button class="ico-btn sm ch-fold" data-action="ch-fold" data-id="' + c.id + '"><b class="' + (open ? 'up' : '') + '">▾</b></button><span>Что сделать сегодня?</span><button class="ico-btn sm" data-action="ch-del" data-id="' + c.id + '" title="Удалить">' + ic('trash') + '</button></div>' +
+          (open ? '<div class="ch-os">' + c.opts.map(function (o, i) {
+            return '<div class="row task ch-row"><button class="check" data-action="ch-pick" data-id="' + c.id + '" data-i="' + i + '"></button><span class="txt">' + esc(o.text) + '<em class="t-link">выбор</em></span>' + ((o.subs || []).length ? '<span class="sub-cnt">' + o.subs.length + ' подд.</span>' : '') + '</div>';
+          }).join('') + '</div>' : '') + '</div>';
+      }).join('') : '<div class="ch-empty">Добавь 2–4 варианта: выбранный станет обычным действием дня.</div>') + '</section>';
+  }
+  function chRead() {
+    var M = UI.chm; if (!M) return;
+    $$('#modal .chn-in').forEach(function (e) { var o = M.opts[+e.getAttribute('data-i')]; if (o) o.text = e.value.trim(); });
+  }
+  function chModal() {
+    var M = UI.chm, t = today(), names = {};
+    S.tasks.forEach(function (k) { if (!k.link && !k.ch && (k.text || '').trim() && k.date === t) names[k.text.trim()] = 1; });
+    var sug = Object.keys(names).slice(0, 8);
+    openModal('<h3>Выборочное действие</h3><div class="chm-list">' +
+      M.opts.map(function (o, i) {
+        return '<div class="chm-card"><div class="chm-h"><em>' + (i + 1) + '</em><input class="chn-in" data-i="' + i + '" maxlength="80" value="' + esc(o.text) + '" placeholder="Название действия">' + (M.opts.length > 2 ? '<button class="ico-btn sm" data-action="ch-slot-del" data-i="' + i + '">' + ic('trash') + '</button>' : '') + '</div>' +
+          (sug.length ? '<div class="chm-sug">' + sug.map(function (n) { return '<button type="button" class="chip-t sm' + (o.text === n ? ' on' : '') + '" data-action="ch-fill" data-i="' + i + '" data-v="' + esc(n) + '">' + esc(n) + '</button>'; }).join('') + '</div>' : '') +
+          (o.subs.length ? '<div class="chm-subs">' + o.subs.map(function (x, j) { return '<div class="ta-sub"><em>' + (j + 1) + '</em><span>' + esc(x) + '</span><button type="button" class="ico-btn sm" data-action="ch-sub-del" data-i="' + i + '" data-j="' + j + '">' + ic('trash') + '</button></div>'; }).join('') + '</div>' : '') +
+          '<div class="ta-add"><input class="chs-in" data-i="' + i + '" maxlength="120" placeholder="Поддействие (необязательно)"><button type="button" class="ico-btn plus" data-action="ch-sub-add" data-i="' + i + '" title="Добавить поддействие">＋</button></div></div>';
+      }).join('') + (M.opts.length < 4 ? '<button type="button" class="chm-more" data-action="ch-slot-add">＋ Ещё вариант</button>' : '') + '</div>' +
+      '<div class="modal-actions"><button class="btn-soft" data-action="modal-close">Отмена</button><button class="btn-primary" data-action="ch-save">Создать выбор</button></div>');
+  }
+  function iqRead() { var Q = UI.iq, n = $('#iq-name'); if (Q && n) Q.name = n.value; }
+  function iqModal() {
+    var Q = UI.iq, hs = S.habits.filter(function (h) { return !h.sys; }), ps = S.projects, ns = Object.keys(Q.sel.proj).length, nh = Object.keys(Q.sel.hab).length;
+    function tile(k, label, total, nSel, icn) {
+      return '<button type="button" class="iq-tile' + (Q.tab === k ? ' on' : '') + (nSel ? ' has' : '') + '" data-action="iq-tab" data-t="' + k + '"><span class="iq-ti">' + intIc(icn) + '</span><b>' + label + '</b><span class="iq-bd' + (nSel ? ' sel' : '') + '"><i>' + (nSel || total) + '</i></span></button>';
+    }
+    var items = (Q.tab === 'proj' ? ps.map(function (p) { return [p.id, p.name, 'проект', intIc('proj')]; }) : hs.map(function (h) { return [h.id, h.name, h.type === 'bad' ? 'вредная' : 'полезная', h.type === 'bad' ? WARN_SVG : ic('tick')]; }));
+    openModal('<h3>Взаимодействие</h3><div class="iq-tiles">' + tile('proj', 'Проекты', ps.length, ns, 'proj') + tile('hab', 'Привычки', hs.length, nh, 'hab') + '</div>' +
+      '<div class="iq-list2">' + (items.length ? items.map(function (r) {
+        var on = !!Q.sel[Q.tab][r[0]];
+        return '<button type="button" class="iq-r' + (on ? ' on' : '') + '" data-action="iq-tog" data-k="' + Q.tab + '" data-id="' + r[0] + '"><span class="iq-ic">' + r[3] + '</span><b>' + esc(r[1]) + '</b><small>' + r[2] + '</small><i class="iq-ck">' + (on ? ic('tick') : '') + '</i></button>';
+      }).join('') : '<div class="empty sm">' + (Q.tab === 'proj' ? 'Проектов пока нет' : 'Привычек пока нет') + '</div>') + '</div>' +
+      '<label class="iq-nm"><span>Название взаимодействия</span><input id="iq-name" maxlength="80" value="' + esc(Q.name || '') + '" placeholder="Например: Рабочие проекты"></label>' +
+      '<div class="modal-actions"><button class="btn-soft" data-action="modal-close">Отмена</button><button class="btn-primary" data-action="iq-ok"' + (ns + nh ? '' : ' disabled') + '>Создать · ' + (ns + nh) + '</button></div>');
+  }
+  var ORD = {
+    day: { key: 'dayOrder', def: ['plain', 'ints', 'choice'], names: { plain: 'Обычные действия', ints: 'Взаимодействия', choice: 'Выборочные' } },
+    hall: { key: 'hallOrder', def: ['act', 'hab'], names: { act: 'Достижения', hab: 'Привычки' } }
+  };
+  function ordGet(key) { var D = ORD[key], a = (S.settings[D.key] || []).filter(function (x) { return D.def.indexOf(x) >= 0; }); D.def.forEach(function (x) { if (a.indexOf(x) < 0) a.push(x); }); return a; }
+  function ordIdx(key, g) { return ordGet(key).indexOf(g); }
+  function ordModal(key) {
+    var D = ORD[key], arr = ordGet(key);
+    openModal('<h3>Порядок</h3><div class="ord-list">' + arr.map(function (g, i) {
+      return '<div class="ord-r"><em>' + (i + 1) + '</em><b>' + D.names[g] + '</b><button class="ico-btn sm" data-action="ord-mv" data-o="' + key + '" data-i="' + i + '" data-d="-1"' + (i ? '' : ' disabled') + '>' + ic('chevL') + '</button><button class="ico-btn sm" data-action="ord-mv" data-o="' + key + '" data-i="' + i + '" data-d="1"' + (i < arr.length - 1 ? '' : ' disabled') + '>' + ic('chevR') + '</button></div>';
+    }).join('') + '</div><div class="modal-actions"><button class="btn-primary" data-action="modal-close">Готово</button></div>');
   }
   function layBtns() {
     var L = S.settings.layout, hid = L.hidden || [];
@@ -1636,6 +1682,8 @@
     var t = UI.todayDate || today(), arch = t !== today();
     syncLinks();
     var list = S.tasks.filter(function (k) { return k.date === t && !(k.date >= today() && S.hallClosed && S.hallClosed[normAct(k.text)]); });
+    function grp(k) { return k.ch ? 'choice' : ((k.ints && k.ints.length) || k.link) ? 'ints' : 'plain'; }
+    list = list.map(function (k, i) { return [k, i]; }).sort(function (a, b) { return ordIdx('day', grp(a[0])) - ordIdx('day', grp(b[0])) || a[1] - b[1]; }).map(function (x) { return x[0]; });
     var reqL = list.filter(function (k) { return !k.opt; });
     var done = reqL.filter(function (k) { return k.done; }).length;
     var st = dayStats(t), mm = motivMsg(done, reqL.length, st.total);
@@ -1649,7 +1697,7 @@
       var dueH = dueChip(k, arch), noteH = k.note ? '<div class="t-note"><span>📝</span><p>' + esc(k.note) + '</p></div>' : '';
       return '<div class="trow"><div class="row task ' + (k.done ? 'done' : '') + '">' +
         '<button class="check ' + (k.done ? 'on' : '') + '" data-action="task-toggle" data-id="' + k.id + '"' + (arch ? ' disabled' : '') + '>' + (k.done ? ic('tick') : '') + '</button>' +
-        (k.icon ? '<span class="emo">' + esc(k.icon) + '</span>' : '') + '<span class="txt">' + esc(k.text) + (k.opt ? '<em class="t-opt">необяз.</em>' : '') + (k.link ? '<em class="t-link">' + (k.link.k === 'hab' ? 'привычка' : 'проект') + '</em>' : '') + dueH + '</span>' + (k.link && k.link.k === 'hab' && byId(S.habits, k.link.hid) ? habBtns(byId(S.habits, k.link.hid), k.date, arch) : '') +
+        (k.icon ? '<span class="emo">' + esc(k.icon) + '</span>' : '') + '<span class="txt">' + esc(k.text) + (k.opt ? '<em class="t-opt">необяз.</em>' : '') + (k.ch ? '<em class="t-link">выборочное</em>' : '') + (k.link ? '<em class="t-link">' + (k.link.k === 'hab' ? 'привычка' : 'проект') + '</em>' : '') + dueH + '</span>' + (k.link && k.link.k === 'hab' && byId(S.habits, k.link.hid) ? habBtns(byId(S.habits, k.link.hid), k.date, arch) : '') +
         (k.ind && n ? '<i class="lvl ' + lvl + '" title="Сложность: ' + n + ' поддействий"></i>' : '') +
         (arch || k.link ? '' : '<button class="ico-btn" data-action="task-sub" data-id="' + k.id + '" title="Добавить поддействие">＋</button>') + ((n || nI) ? '<button class="sub-cnt" data-action="task-open" data-id="' + k.id + '">' + (n ? dn + '/' + n : '🔗 ' + nI) + ' <b class="' + (open ? 'up' : '') + '">▾</b></button>' : '') +
         (arch || k.link ? '' : '<button class="ico-btn ' + (k.tpl ? 'pinon' : '') + '" data-action="task-pin" data-id="' + k.id + '" title="Закрепить на каждый день">' + ic('pin') + '</button>') +
@@ -1658,7 +1706,7 @@
     }).join('') : '<div class="empty">' + (arch ? 'В этот день действий не было.' : 'Пока пусто') + '</div>';
     var gr = greeting(), lay = S.settings.layout, wkOn = !S.settings.hideWeek && !arch;
     var heroH = '<div class="hero"><div class="hero-text"><h1 class="hello">' + gr[0] + '</h1><p class="sub">' + gr[1] + '</p>' + (wkOn && !lay.custom ? weekChip() : '') + '</div>' + (arch || !modelHtml() ? '' : '<div class="model-wrap">' + modelHtml() + '</div>') + '</div>';
-    var tasksH = '<section class="glass tasks pad-' + (S.settings.pad || 'glass') + '"><div class="tasks-head"><span class="ti">' + ic('cal') + '</span><b>' + (arch ? 'Действия за ' + esc(fmtLong(t)) : 'Твои действия на сегодня') + '</b>' +
+    var tasksH = '<section class="glass tasks pad-' + (S.settings.pad || 'glass') + '"><div class="tasks-head"><span class="ti">' + ic('cal') + '</span><b>' + (arch ? 'Действия за ' + esc(fmtLong(t)) : 'Твои действия на сегодня') + '</b><button class="ico-btn sm ord-b" data-action="ord-open" data-o="day" title="Порядок блоков">⇅</button>' +
       '<span class="cnt">' + done + ' из ' + reqL.length + '</span><div class="progress sm"><i style="width:' + pct + '%"></i></div></div><div class="task-list">' + rows + '</div>' + '' + '</section>';
     var msgH = '<div class="glass motiv-card"><svg viewBox="0 0 24 24" class="star"><path d="M12 2l2.4 7.6L22 12l-7.6 2.4L12 22l-2.4-7.6L2 12l7.6-2.4z"/></svg><h4>' + esc(mm[0]) + '</h4><p>' + esc(mm[1]) + '</p></div>';
     var addH = '<button class="btn-add" data-action="task-add"><span class="plus">＋</span><span>Добавить действие</span></button>';
@@ -1683,7 +1731,7 @@
       }).join('');
       return '<div class="today custom' + (ed ? ' editing' : '') + '">' + bar + '<div class="lgrid" id="lgrid" style="height:' + Math.max(1, Hh) * LROW + 'px">' + ovs + blocks + '</div>' + (ed ? '' : foot) + dock + '</div>';
     }
-    return '<div class="today' + (arch ? ' arch' : '') + '">' + heroH + (arch ? archHtml(t) : '') + '<div class="today-grid">' + tasksH + '<aside class="side">' + msgH + addH + kpdH + '</aside></div>' + foot + dock + '</div>';
+    return '<div class="today' + (arch ? ' arch' : '') + '">' + heroH + (arch ? archHtml(t) : '') + '<div class="today-grid">' + tasksH + '<aside class="side">' + msgH + addH + '<div class="add-pair"><button class="btn-add alt" data-action="int-quick"><span class="plus">⇄</span><span>Взаимодействие</span></button><button class="btn-add alt" data-action="ch-add"><span class="plus">⑂</span><span>Выбор</span></button></div>' + (arch ? '' : choiceHtml()) + kpdH + '</aside></div>' + foot + dock + '</div>';
   }
 
   /* ---------- вид: Мотивации ---------- */
@@ -2041,12 +2089,10 @@
   }
   function capsModal() {
     var rows = CATS.map(function (c) {
-      return '<label class="cap-row"><span class="cap-ic">' + ic(c[2]) + '</span><b>' + c[1] + '</b><input type="number" min="1" max="40" step="1" data-cap="' + c[0] + '" value="' + CAPS[c[0]] + '"><small>1–40</small></label>';
+      return '<label class="cap-row"><span class="cap-ic">' + ic(c[2]) + '</span><b>' + c[1] + '</b><input type="number" min="1" max="40" step="1" data-cap="' + c[0] + '" value="' + CAPS[c[0]] + '"></label>';
     }).join('');
-    openModal('<h3>Нагрузка на день</h3><div class="cap-ref" style="margin-bottom:12px"><b>Что такое «нагрузка» и зачем она</b><p class="muted" style="margin:6px 0">Нагрузка — это норма на день: сколько заданий в каждой категории ты считаешь «полностью сделанной». Например, нагрузка 20 у Ежедневника значит: день по этой категории закрыт, когда выполнено все 20 заданий.</p><p class="muted" style="margin:6px 0">Как считается: какое бы число ты ни поставил, категория даёт свой 1 балл за день только после того, как выполнены <b>абсолютно все</b> задания по этой норме. Выполнил половину — получил половину балла, и так до полного. Три категории по 1 баллу = 3 балла = 100% КПД дня.</p><p class="muted" style="margin:6px 0">Меньше нагрузка — проще набрать балл, больше — строже счёт. Подбери то, что реально можешь делать каждый день.</p></div>' + rows +
+    openModal('<h3>Нагрузка на день</h3><div class="cap-list">' + rows + '</div>' +
       '<div class="cap-sum"><span>Всего в день: <b id="cap-total"></b></span><em id="cap-level"></em></div>' +
-      '<div class="cap-ref"><b>Подсказка</b><ul><li><i>20</i> — средняя нагрузка, рекомендуется</li><li><i>40</i> — тяжело</li><li><i>80+</i> — очень тяжело</li></ul>' +
-      '<small>Прошлые дни пересчитаются по новым лимитам, остальное не меняется.</small></div>' +
       '<div class="modal-actions"><button class="btn-soft" data-action="caps-reset">По умолчанию</button><button class="btn-soft" data-action="modal-close">Отмена</button><button class="btn-primary" data-action="caps-save">Сохранить</button></div>');
     capsCalc();
   }
@@ -2197,13 +2243,6 @@
       '<div class="fld"><span>2. Смайлик (необязательно)</span>' + emojiPicker(T.icon, T) + '</div>' +
       '<div class="fld"><span>3. Время</span>' + tmRow + '</div>' +
       '<div class="fld"><span>4. Примечание (необязательно)</span><textarea id="ta-note" maxlength="500" rows="2" placeholder="Важные условия, критерии, детали">' + esc(T.note || '') + '</textarea></div>' +
-      '<div class="fld"><span>Взаимодействие' + ((T.ints || []).length ? ' · ' + T.ints.length : '') + '</span><div class="int-tiles">' +
-        '<button type="button" class="int-tile ' + (T.intTab === 'proj' ? 'on' : '') + '" data-action="ta-int-tab" data-s="proj">' + intIc('proj') + '<b>Проект</b><small>' + (T.ints || []).filter(function (x) { return x.k === 'proj'; }).length + '</small></button>' +
-        '<button type="button" class="int-tile ' + (T.intTab === 'hab' ? 'on' : '') + '" data-action="ta-int-tab" data-s="hab">' + intIc('hab') + '<b>Привычка</b><small>' + (T.ints || []).filter(function (x) { return x.k === 'hab'; }).length + '</small></button></div>' +
-        (T.intTab ? '<div class="int-pick">' + ((T.intTab === 'proj' ? S.projects.map(function (p) { return [p.id, p.name, p.icon]; }) : S.habits.filter(function (h) { return !h.sys; }).map(function (h) { return [h.id, h.name, h.icon]; })).map(function (r) {
-          var on = (T.ints || []).some(function (x) { return x.k === T.intTab && (x.pid === r[0] || x.hid === r[0]); });
-          return '<button type="button" class="ta-chk ' + (on ? 'on' : '') + '" data-action="ta-int-pick" data-k="' + T.intTab + '" data-id="' + r[0] + '"><i>' + (on ? ic('tick') : '') + '</i><span><b>' + esc(r[1]) + '</b></span></button>';
-        }).join('') || '<div class="empty sm">' + (T.intTab === 'proj' ? 'Проектов пока нет' : 'Привычек пока нет') + '</div>') + '</div>' : '') + '</div>' +
       '<div class="fld"><span>5. Поддействия (необязательно · 3 очка вместо 1)' + (n ? ' · ' + n : '') + '</span><div class="ta-subs">' + T.subs.map(function (s, i) {
         return '<div class="ta-sub"><em>' + (i + 1) + '</em><span>' + esc(s) + '</span><button type="button" class="chip-t sm ' + (T.subOpt && T.subOpt[i] ? 'on' : '') + '" data-action="ta-sub-opt" data-i="' + i + '" title="Необязательное поддействие">необяз.</button><button type="button" class="ico-btn sm" data-action="ta-sub-del" data-i="' + i + '">' + ic('trash') + '</button></div>'; }).join('') +
         '</div><div class="ta-add"><input id="ta-sub" maxlength="120" placeholder="Новое поддействие"><button type="button" class="btn-soft sm" data-action="ta-sub-add">Добавить</button></div>' +
@@ -2581,7 +2620,7 @@
     var tabs = [['all', 'Все'], ['pin', 'Закреплённые'], ['fav', 'Избранные']].map(function (x) { return '<button class="tab sm ' + (f === x[0] ? 'on' : '') + '" data-action="n3-filter" data-f="' + x[0] + '">' + x[1] + ' <em>' + cnt[x[0]] + '</em></button>'; }).join('');
     var feed = list.length ? list.map(noteCard).join('') : '<div class="nm-empty"><div class="ne-ico">' + ic('chat') + '</div><b>Здесь пока пусто</b><span>Напиши мысль, нарисуй что-нибудь или отметь заметку.</span></div>';
     var N = UI.n3 || (UI.n3 = Object.assign({ fav: false, pin: false, draw: false, color: DRAW_COLS[0], size: 6, drawn: false, brush: 'pencil', paper: 'dark', half: false, drawData: '', textDraft: '' }, S.draft || {}));
-    return '<div class="notes3"><div class="n3-main"><div class="glass composer3' + (UI.n3full ? ' full' : '') + '"><div class="n3-fh"><button class="btn-soft sm" data-action="n3-full-off">← Свернуть</button><b>Новая заметка</b><button class="btn-primary sm" data-action="n3-save">Сохранить</button></div><textarea id="n3-text" rows="3" maxlength="20000" placeholder="О чём ты думаешь? Любой текст, мысль, цитата…">' + esc(N.textDraft || '') + '</textarea>' +
+    return '<div class="notes3"><div class="n3-main"><div class="glass composer3' + (UI.n3full ? ' full' : '') + '" style="--n3z:' + (S.settings.n3z || 1) + '"><div class="n3-fh"><button class="btn-soft sm" data-action="n3-full-off">← Свернуть</button><b>Новая заметка</b><div class="n3-zm"><button type="button" class="ico-btn sm" data-action="n3-zoom" data-d="-1">A−</button><span id="n3z-v">' + Math.round((S.settings.n3z || 1) * 100) + '%</span><button type="button" class="ico-btn sm" data-action="n3-zoom" data-d="1">A+</button></div><button class="btn-primary sm" data-action="n3-save">Сохранить</button></div><textarea id="n3-text" rows="3" maxlength="20000" placeholder="О чём ты думаешь? Любой текст, мысль, цитата…">' + esc(N.textDraft || '') + '</textarea>' +
       (N.drawData ? '<div class="n3-prev"><img src="' + N.drawData + '" alt=""><div><button class="btn-soft sm" data-action="dr-open">Изменить рисунок</button><button class="btn-soft sm" data-action="dr-remove">Убрать</button></div></div>' : '') +
       '<div class="n3-foot"><button class="n3-act" data-action="n3-full-on">' + ic('full') + '<span>На весь экран</span></button><button class="n3-act ' + (N.drawData ? 'on' : '') + '" data-action="dr-open">' + ic('brush') + '<span>Рисунок</span></button><button class="n3-act ' + (N.fav ? 'on' : '') + '" data-action="n3-fav">' + ic('heart') + '<span>В избранное</span></button><button class="n3-act ' + (N.pin ? 'on' : '') + '" data-action="n3-pin-new">' + ic('pin') + '<span>Закрепить</span></button>' +
       '<button class="btn-primary" data-action="n3-save">Сохранить заметку</button></div></div>' +
@@ -2867,7 +2906,7 @@
       if (addLinked({ k: 'hab', hid: h.id }, (h.type === 'bad' ? 'Сегодня без: ' : '') + h.name, h.icon || (h.type === 'bad' ? '🚫' : '✅'))) { closeModal(); toast('Добавлено в Ежедневник'); }
     },
     'week-open': function () { weekModal(); },
-    'ach-br': function (el) { var b = el.getAttribute('data-b'); UI.achBr = UI.achBr || {}; UI.achBr[b] = !UI.achBr[b]; render(); },
+    'ach-br': function (el) { var b = el.getAttribute('data-b'); UI.achBr = UI.achBr || {}; UI.achBr[b] = !UI.achBr[b]; render(); if (UI.achBr[b]) { var sec = document.querySelector('.ach-br[data-b="' + b + '"]') || (document.querySelector('[data-action="ach-br"][data-b="' + b + '"]') || {}).parentNode; if (sec && sec.querySelectorAll && sec.animate) [].slice.call(sec.querySelectorAll('.ach-r')).slice(0, 18).forEach(function (t, i) { t.animate([{ opacity: 0, transform: 'translateY(14px) scale(.97)' }, { opacity: 1, transform: 'none' }], { duration: 380, delay: i * 28, easing: EASE_OUT, fill: 'backwards' }); }); } },
     'hall-add': function () { hallModal(); },
     'rep-open': function (el) { var id = el.getAttribute('data-id'); UI.repOpen = UI.repOpen === id ? null : id; var li = el.closest('li'); if (li) { $$('.rep-li.open').forEach(function (x) { if (x !== li) x.classList.remove('open'); }); li.classList.toggle('open', UI.repOpen === id); } },
     'hall-hab': function () { UI.hh = { hid: '', icon: '🏆', why: '' }; hallHabModal(); },
@@ -3254,37 +3293,48 @@
       if (L.hidden.indexOf(b) < 0) L.hidden.push(b); else { if (b === 'week') S.settings.hideWeek = false; H['lay-show'](el); }
       save(); render(); layBtns();
     },
-    'int-quick': function () {
-      var hs = S.habits.filter(function (h) { return !h.sys; }), ps = S.projects;
-      openModal('<h3>Взаимодействие</h3><div class="muted">Привычка или проект станут действием на сегодня.</div><div class="iq-list">' +
-        hs.map(function (h) { return '<button class="iq-b" data-action="int-quick-pick" data-k="hab" data-id="' + h.id + '"><span class="iq-i">' + (h.type === 'bad' ? WARN_SVG : ic('tick')) + '</span><b>' + esc(h.name) + '</b><small>' + (h.type === 'bad' ? 'вредная привычка' : 'полезная привычка') + '</small></button>'; }).join('') +
-        ps.map(function (p) { return '<button class="iq-b" data-action="int-quick-pick" data-k="proj" data-id="' + p.id + '"><span class="iq-i">' + intIc('proj') + '</span><b>' + esc(p.name) + '</b><small>проект</small></button>'; }).join('') +
-        (hs.length + ps.length ? '' : '<div class="empty">Пока нет привычек и проектов</div>') + '</div>');
+    'int-quick': function () { UI.iq = { tab: 'proj', sel: { proj: {}, hab: {} }, name: '' }; iqModal(); },
+    'iq-tab': function (el) { iqRead(); UI.iq.tab = el.getAttribute('data-t'); iqModal(); },
+    'iq-tog': function (el) {
+      iqRead(); var Q = UI.iq, k = el.getAttribute('data-k'), id = el.getAttribute('data-id');
+      if (Q.sel[k][id]) delete Q.sel[k][id]; else Q.sel[k][id] = 1; iqModal(true);
     },
-    'int-quick-pick': function (el) {
-      var k = el.getAttribute('data-k'), id = el.getAttribute('data-id'), o = k === 'hab' ? byId(S.habits, id) : byId(S.projects, id); if (!o) return;
-      S.tasks.push({ id: uid(), text: o.name, icon: k === 'hab' ? (o.type === 'bad' ? '🛡️' : '🔁') : '📁', done: false, date: today(), cat: Date.now(), ints: [k === 'hab' ? { k: 'hab', hid: id } : { k: 'proj', pid: id }] });
-      closeModal(); save(); render();
+    'iq-ok': function () {
+      iqRead(); var Q = UI.iq, ints = [];
+      Object.keys(Q.sel.proj).forEach(function (id) { ints.push({ id: uid(), k: 'proj', pid: id }); });
+      Object.keys(Q.sel.hab).forEach(function (id) { ints.push({ id: uid(), k: 'hab', hid: id }); });
+      if (!ints.length) { toast('Выбери хотя бы один проект или привычку'); return; }
+      var nm = (Q.name || '').trim() || (Object.keys(Q.sel.proj).length >= Object.keys(Q.sel.hab).length ? 'Проекты' : 'Привычки');
+      S.tasks.push({ id: uid(), text: nm, icon: '🔗', done: false, date: today(), cat: Date.now(), ints: ints });
+      UI.taskOpen[S.tasks[S.tasks.length - 1].id] = true; closeModal(); save(); render();
     },
-    'ch-add': function () {
-      openModal('<h3>Новый выбор</h3><label class="did-l">Вопрос</label><input id="ch-t" class="did-in" maxlength="80" value="Что сделать сегодня?" autocomplete="off"><label class="did-l">Варианты (выберешь один за день)</label>' +
-        [0, 1, 2, 3].map(function (i) { return '<div class="ch-opt"><input class="did-in ch-o" maxlength="80" placeholder="' + (i < 2 ? 'Вариант ' + (i + 1) : 'Ещё вариант (необязательно)') + '"><input class="did-in ch-m" maxlength="14" placeholder="время"></div>'; }).join('') +
-        '<label class="ch-daily"><input type="checkbox" id="ch-d"> спрашивать каждый день</label><div class="did-ft"><button class="btn-soft" data-action="modal-close">Отмена</button><button class="btn-primary" data-action="ch-save">Добавить</button></div>');
-    },
+    'ch-add': function () { UI.chm = { opts: [{ text: '', subs: [] }, { text: '', subs: [] }] }; chModal(); },
+    'ch-fill': function (el) { chRead(); UI.chm.opts[+el.getAttribute('data-i')].text = el.getAttribute('data-v'); chModal(); },
+    'ch-slot-add': function () { chRead(); if (UI.chm.opts.length < 4) UI.chm.opts.push({ text: '', subs: [] }); chModal(); },
+    'ch-slot-del': function (el) { chRead(); if (UI.chm.opts.length > 2) UI.chm.opts.splice(+el.getAttribute('data-i'), 1); chModal(); },
+    'ch-sub-add': function (el) { chRead(); var i = el.getAttribute('data-i'), o = UI.chm.opts[+i], inp = $('#modal .chs-in[data-i="' + i + '"]'); var v = inp ? inp.value.trim() : ''; if (v) o.subs.push(v); chModal(); var n = $('#modal .chs-in[data-i="' + i + '"]'); if (n) n.focus(); },
+    'ch-sub-del': function (el) { chRead(); UI.chm.opts[+el.getAttribute('data-i')].subs.splice(+el.getAttribute('data-j'), 1); chModal(); },
     'ch-save': function () {
-      var opts = []; $$('#modal .ch-opt').forEach(function (r) { var t = r.querySelector('.ch-o').value.trim(); if (t) opts.push({ text: t, tm: r.querySelector('.ch-m').value.trim() }); });
-      if (opts.length < 2) { toast('Нужно минимум два варианта'); return; }
-      S.choices = S.choices || []; S.choices.push({ id: uid(), title: ($('#ch-t').value || '').trim() || 'Что сделать сегодня?', opts: opts, daily: $('#ch-d').checked, date: today() });
+      chRead(); var opts = UI.chm.opts.filter(function (o) { return o.text; });
+      if (opts.length < 2) { toast('Заполни минимум два варианта'); return; }
+      S.choices = S.choices || []; S.choices.push({ id: uid(), opts: opts, date: today() });
+      if ((S.settings.layout.hidden || []).indexOf('choice') >= 0) H['lay-show']({ getAttribute: function () { return 'choice'; } });
       closeModal(); save(); render();
     },
+    'ch-fold': function (el) { var id = el.getAttribute('data-id'); UI.chOpen = UI.chOpen || {}; UI.chOpen[id] = UI.chOpen[id] === false; render(); },
     'ch-pick': function (el) {
-      var c = byId(S.choices || [], el.getAttribute('data-id')), i = +el.getAttribute('data-i'); if (!c || !c.opts[i]) return;
-      var o = c.opts[i]; S.choiceDay = S.choiceDay || {}; if (S.choiceDay[c.id] && S.choiceDay[c.id].date === today()) return;
-      S.choiceDay[c.id] = { date: today(), idx: i };
-      S.tasks.push({ id: uid(), text: o.text, icon: '🔀', done: false, date: today(), cat: Date.now(), note: (o.tm ? 'Время: ' + o.tm + ' · ' : '') + 'выбрано из «' + c.title + '»' });
-      save(); render();
+      var c = byId(S.choices || [], el.getAttribute('data-id')), i = +el.getAttribute('data-i'); if (!c || !c.opts[i] || c.picked) return;
+      var o = c.opts[i]; c.picked = today();
+      var k = { id: uid(), text: o.text, icon: '', done: false, date: today(), cat: Date.now(), ch: true, subs: (o.subs || []).map(function (x) { return { id: uid(), text: x, done: false }; }) };
+      S.tasks.push(k); UI.taskOpen[k.id] = true; save(); render();
     },
     'ch-del': function (el) { var id = el.getAttribute('data-id'); S.choices = (S.choices || []).filter(function (c) { return c.id !== id; }); save(); render(); },
+    'n3-zoom': function (el) { var z = Math.max(.7, Math.min(2.4, Math.round(((S.settings.n3z || 1) + +el.getAttribute('data-d') * .15) * 100) / 100)); S.settings.n3z = z; var c = $('.composer3'); if (c) c.style.setProperty('--n3z', z); var l = $('#n3z-v'); if (l) l.textContent = Math.round(z * 100) + '%'; save(); },
+    'ord-open': function (el) { ordModal(el.getAttribute('data-o')); },
+    'ord-mv': function (el) {
+      var key = el.getAttribute('data-o'), D = ORD[key], arr = ordGet(key), i = +el.getAttribute('data-i'), j = i + +el.getAttribute('data-d');
+      if (j < 0 || j >= arr.length) return; var t = arr[i]; arr[i] = arr[j]; arr[j] = t; S.settings[D.key] = arr; save(); ordModal(key, true); render();
+    },
     'lay-done': function () { UI.layEdit = false; render(); },
     'lay-reset': function () { S.settings.layout = { custom: false, items: {}, hidden: [] }; UI.layEdit = false; save(); render(); },
     'lay-hide': function (el) { var L = S.settings.layout, b = el.getAttribute('data-b'); if (L.hidden.indexOf(b) < 0) L.hidden.push(b); save(); render(); },
@@ -3666,19 +3716,23 @@
   }, true);
   document.addEventListener('pointermove', function (e) {
     if (!DR) return;
-    var cv = $('#dr-canvas'), ring = $('#dr-cur');
-    if (cv && ring && e.pointerType !== 'touch' && e.target.closest && e.target.closest('#dr-wrap') && !e.target.closest('#dr-float') && !DR.space) {
-      var N = UI.n3, r = cv.getBoundingClientRect(), wr = $('#dr-wrap').getBoundingClientRect(), m = N.brush === 'eraser' ? 2 : N.brush === 'marker' ? 2.2 : N.brush === 'spray' ? 4.4 : N.brush === 'pen' ? 1.6 : 1;
-      var dia = Math.max(3, N.size * m * (r.width / cv.width));
-      ring.style.cssText = 'width:' + dia + 'px;height:' + dia + 'px;transform:translate(' + (e.clientX - wr.left - dia / 2) + 'px,' + (e.clientY - wr.top - dia / 2) + 'px);opacity:1;' + (N.brush === 'eraser' ? 'border-style:dashed;' : '');
-    } else if (ring) ring.style.opacity = '0';
+    DR.mx = e.clientX; DR.my = e.clientY; DR.mt = e.pointerType; DR.mo = !!(e.target.closest && e.target.closest('#dr-wrap') && !e.target.closest('#dr-float'));
+    if (!DR.raf) DR.raf = requestAnimationFrame(function () {
+      DR.raf = 0; var ring = $('#dr-cur'), cv = $('#dr-canvas'); if (!ring || !cv) return;
+      if (DR.mt !== 'touch' && DR.mo && !DR.space) {
+        var N = UI.n3, wr = DR.wr || (DR.wr = $('#dr-wrap').getBoundingClientRect()), cw = DR.cw || (DR.cw = cv.getBoundingClientRect().width), m = N.brush === 'eraser' ? 2 : N.brush === 'marker' ? 2.2 : N.brush === 'spray' ? 4.4 : N.brush === 'pen' ? 1.6 : 1;
+        var dia = Math.max(3, N.size * m * (cw / cv.width)), key = Math.round(dia * 10) + N.brush;
+        if (DR.rk !== key) { DR.rk = key; ring.style.width = dia + 'px'; ring.style.height = dia + 'px'; ring.style.borderStyle = N.brush === 'eraser' ? 'dashed' : 'solid'; }
+        ring.style.transform = 'translate3d(' + (DR.mx - wr.left - dia / 2) + 'px,' + (DR.my - wr.top - dia / 2) + 'px,0)'; ring.style.opacity = '1';
+      } else ring.style.opacity = '0';
+    });
     if (DR.tp && DR.tp[e.pointerId]) {
       DR.tp[e.pointerId] = { x: e.clientX, y: e.clientY };
       if (DR.pinch && Object.keys(DR.tp).length >= 2) { var t1 = tpDist(); DR.px += t1.x - DR.pinch.x; DR.py += t1.y - DR.pinch.y; drZoomAt(DR.z * t1.d / DR.pinch.d, t1.x, t1.y); DR.pinch = { d: t1.d, x: t1.x, y: t1.y }; e.preventDefault(); e.stopPropagation(); return; }
     }
     if (DR.pan) { DR.px = DR.pan.px + e.clientX - DR.pan.sx; DR.py = DR.pan.py + e.clientY - DR.pan.sy; drView(); e.stopPropagation(); }
   }, true);
-  function drUp(e) { if (!DR) return; if (DR.tp) { delete DR.tp[e.pointerId]; if (Object.keys(DR.tp).length < 2) DR.pinch = null; } DR.pan = null; }
+  function drUp(e) { if (!DR) return; DR.wr = DR.cw = null; if (DR.tp) { delete DR.tp[e.pointerId]; if (Object.keys(DR.tp).length < 2) DR.pinch = null; } DR.pan = null; }
   document.addEventListener('pointerup', drUp, true); document.addEventListener('pointercancel', drUp, true);
   var FD = null;
   document.addEventListener('pointerdown', function (e) {
@@ -3856,4 +3910,21 @@
   if (window.lifeOwlApi.isMaximized) window.lifeOwlApi.isMaximized().then(setMaxIcon).catch(function () { });
   cloudLoad(); cloudSetStatus('off');
   window.lifeOwlApi.lastUser().then(function (u) { if (u) $('#lg-user').value = u; $('#lg-' + (u ? 'pass' : 'user')).focus(); }).catch(function () { });
+  /* режим прокрутки: на время скролла отключаем дорогие эффекты */
+  (function () {
+    var t = 0;
+    document.addEventListener('scroll', function () { if (!t) document.body.classList.add('scr'); clearTimeout(t); t = setTimeout(function () { document.body.classList.remove('scr'); t = 0; }, 140); }, true);
+  })();
+  /* свои «степперы» вместо стрелок у числовых полей */
+  function enhanceNums() {
+    $$('input[type=number]:not([data-ns])').forEach(function (i) {
+      i.setAttribute('data-ns', '1'); var w = document.createElement('span'); w.className = 'numst';
+      i.parentNode.insertBefore(w, i); var m = document.createElement('button'), pl = document.createElement('button');
+      m.type = pl.type = 'button'; m.textContent = '−'; pl.textContent = '+';
+      function go(d) { return function () { var v = +i.value || 0, st = +i.step || 1, mn = i.min !== '' ? +i.min : -1e9, mx = i.max !== '' ? +i.max : 1e9; i.value = Math.max(mn, Math.min(mx, v + d * st)); i.dispatchEvent(new Event('input', { bubbles: true })); i.dispatchEvent(new Event('change', { bubbles: true })); }; }
+      m.addEventListener('click', go(-1)); pl.addEventListener('click', go(1));
+      w.appendChild(m); w.appendChild(i); w.appendChild(pl);
+    });
+  }
+  new MutationObserver(function () { if (enhanceNums.q) return; enhanceNums.q = requestAnimationFrame(function () { enhanceNums.q = 0; enhanceNums(); }); }).observe(document.body, { childList: true, subtree: true });
 })();
