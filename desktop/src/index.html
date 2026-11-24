@@ -13,11 +13,13 @@
   <div class="bg" aria-hidden="true">
     <div id="bg-img" class="bg-img"></div>
     <canvas id="snow" class="snow"></canvas>
-    <div id="fxl" class="fxl" aria-hidden="true"><div class="fxw"><i class="f1"></i><i class="f2"></i></div></div>
+    <div id="fx-r" class="fxl fx-r" aria-hidden="true"><div class="fxw"><i class="f1"></i><i class="f2"></i></div></div>
+    <div id="fx-s" class="fxl fx-s" aria-hidden="true"><div class="fxw"><i class="f1"></i><i class="f2"></i></div></div>
+    <div id="fx-t" class="fxt" aria-hidden="true"><i class="fl1"></i><i class="fl2"></i><i class="bolt b1"></i><i class="bolt b2"></i></div>
     <svg class="silk" viewBox="0 0 1600 900" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
       <defs>
-        <linearGradient id="sk1" x1="0" x2="1" y1="0" y2="0"><stop offset="0" stop-color="#9aa6ff" stop-opacity="0"/><stop offset=".35" stop-color="#d6dcff" stop-opacity=".9"/><stop offset=".7" stop-color="#8f7bff" stop-opacity=".7"/><stop offset="1" stop-color="#9aa6ff" stop-opacity="0"/></linearGradient>
-        <linearGradient id="sk2" x1="0" x2="1" y1="0" y2="0"><stop offset="0" stop-color="#6f7dff" stop-opacity="0"/><stop offset=".5" stop-color="#b7a8ff" stop-opacity=".75"/><stop offset="1" stop-color="#6f7dff" stop-opacity="0"/></linearGradient>
+        <linearGradient id="sk1" x1="0" x2="1" y1="0" y2="0"><stop offset="0" style="stop-color:var(--wave1);stop-opacity:0"/><stop offset=".35" style="stop-color:var(--wave1);stop-opacity:.9"/><stop offset=".7" style="stop-color:var(--wave2);stop-opacity:.9"/><stop offset="1" style="stop-color:var(--wave2);stop-opacity:0"/></linearGradient>
+        <linearGradient id="sk2" x1="0" x2="1" y1="0" y2="0"><stop offset="0" style="stop-color:var(--wave2);stop-opacity:0"/><stop offset=".5" style="stop-color:var(--wave1);stop-opacity:.75"/><stop offset="1" style="stop-color:var(--wave2);stop-opacity:0"/></linearGradient>
       </defs>
       <g class="sk-a">
         <path d="M-100,620 C200,380 420,820 760,560 C1080,310 1260,640 1700,300" fill="none" stroke="url(#sk2)" stroke-width="46" opacity=".16"/>

@@ -66,6 +66,10 @@
     chevD: '<path d="M6 9l6 6 6-6"/>',
     cal: '<rect x="4" y="5" width="16" height="15" rx="2"/><path d="M4 10h16M9 3v4M15 3v4"/>',
     dots: '<circle cx="5" cy="12" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="19" cy="12" r="1.5"/>',
+    full: '<path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/>',
+    brush: '<path d="M4 20c3 0 5-1 5-4a3 3 0 0 1 3-3l7-8a2 2 0 0 0-3-3l-8 7a3 3 0 0 0-3 3c0 3-1 5-1 8z" transform="translate(0,-2)"/>',
+    heart: '<path d="M12 20s-7-4.5-8.5-9A4.5 4.5 0 0 1 12 7.5 4.5 4.5 0 0 1 20.5 11C19 15.5 12 20 12 20z"/>',
+    shelf: '<path d="M5 4h4v16H5zM10 6h4v14h-4zM15.5 8.5l3.8-1 3 11-3.8 1z" transform="translate(-1.5,0)"/>',
     close: '<path d="M6 6l12 12M18 6L6 18"/>',
     tick: '<path d="M6 12.5l4 4 8-9"/>',
     medal: '<circle cx="12" cy="9.5" r="5.5"/><path d="M8.6 14l-2 7 5.4-2.6 5.4 2.6-2-7M12 6.8l.9 1.9 2 .3-1.5 1.4.4 2-1.8-1-1.8 1 .4-2-1.5-1.4 2-.3z"/>',
@@ -73,10 +77,12 @@
     loop: '<path d="M20 12a8 8 0 0 1-13.6 5.7M4 12a8 8 0 0 1 13.6-5.7"/><path d="M17.8 3v3.6h-3.6M6.2 21v-3.6h3.6"/>',
     fire: '<path d="M12 3c1 3.5 5 5.5 5 10a5 5 0 0 1-10 0c0-2 1-3 2-4 0 2 1 3 2 3 0-3-1-6 1-9z"/>'
   };
+  [['expand','<path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/>'],['pin2','<path d="M9 4h6l-1 6 3 3H7l3-3-1-6zM12 13v7"/>'],['heart','<path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.5A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"/>'],['brush','<path d="M4 20c0-2 1.5-3 3-3 1.5 0 2.5 1 2.5 2.5C9.5 21 7 21 4 20zM9 16l9-10a2 2 0 0 1 3 3L11 18"/>'],['fold','<path d="M6 15l6-6 6 6"/>'],['unfold','<path d="M6 9l6 6 6-6"/>'],['lib','<path d="M5 4h4v16H5zM11 4h4v16h-4zM17 5l3.5 1-3.5 14-3.5-1z"/>'],['sliders','<path d="M4 7h10M18 7h2M4 17h2M10 17h10M14 4v6M6 14v6"/>'],['clock','<circle cx="12" cy="12" r="8"/><path d="M12 8v4l3 2"/>'],['link','<path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/>'],['branch','<circle cx="6" cy="5" r="2"/><circle cx="6" cy="19" r="2"/><circle cx="18" cy="8" r="2"/><path d="M6 7v10M18 10c0 4-6 3-12 7"/>'],['choice','<path d="M12 3v6M12 9l-6 6v6M12 9l6 6v6"/>']].forEach(function (a) { if (!SVG[a[0]]) SVG[a[0]] = a[1]; });
   function ic(name, cls) {
     return '<svg viewBox="0 0 24 24" class="svg ' + (cls || '') + '">' + SVG[name] + '</svg>';
   }
 
+  var INT_MIN = 2;                                      // минимум записей по проекту за день, чтобы они пошли в КПД
   var FINISH_MIN = 3;                                   // минимум заданий за день, чтобы можно было «Завершить день»
   var CAPS = { t: 5, m: 2, n: 5, p: 3, h: 5 };         // Сегодня / Мотивации / Разговоры / Проекты / Привычки
   var BG_MAX_W = 5120, BG_MAX_H = 2880, BG_JPEG_Q = 0.98;   // лимиты обоев (4K, качество jpeg)
@@ -379,7 +385,14 @@
       var key = k.date + '|' + (k.text || '').trim().toLowerCase(); if (seenT[key]) return; seenT[key] = 1;     // одинаковые действия за день — один раз
       ix.t[k.date] = (ix.t[k.date] || 0) + (k.subs && k.subs.length ? 3 : 1);
     });
-    S.projects.forEach(function (p) { p.actions.forEach(function (a) { if (a.done && !a.noKpd) inc(ix.p, a.doneDate); }); });
+    S.projects.forEach(function (p) {
+      var per = {};
+      (function walk(list, top) { (list || []).forEach(function (a) {
+        if (a.done && !a.noKpd) { if (a.from) { per[a.day] = (per[a.day] || 0) + 1; } else if (top) inc(ix.p, a.doneDate); }
+        walk(a.subs, false);
+      }); })(p.actions, true);
+      Object.keys(per).forEach(function (d) { if (per[d] >= INT_MIN) ix.p[d] = (ix.p[d] || 0) + per[d]; });   // записи «что я сделал» идут в КПД, когда их минимум 2 за день
+    });
     var lastN = {}, seenN = {}, okN = {};
     S.notes.slice().sort(function (x, y) { return (x.at || 0) - (y.at || 0); }).forEach(function (n) {
       var d = n.cdate || n.date, key = d + '|' + (n.text || '').trim().toLowerCase();
@@ -1050,8 +1063,8 @@
     return '<div class="model">' + m + '</div>';
   }
     var RS = (parseFloat(getComputedStyle(document.documentElement).fontSize) || 16) / 16, LROW = Math.round(54 * RS), LGAP = Math.round(10 * RS);
-  var LAY_DEF = { hero: { x: 0, y: 0, w: 12, h: 4 }, tasks: { x: 0, y: 4, w: 8, h: 8 }, msg: { x: 8, y: 4, w: 4, h: 3 }, add: { x: 8, y: 7, w: 4, h: 2 }, kpd: { x: 8, y: 9, w: 4, h: 3 }, week: { x: 0, y: 12, w: 5, h: 2 } };
-  var LAY_MIN = { hero: [3, 2], tasks: [3, 3], msg: [2, 1], add: [2, 1], kpd: [2, 2], week: [2, 1] };
+  var LAY_DEF = { hero: { x: 0, y: 0, w: 12, h: 4 }, tasks: { x: 0, y: 4, w: 8, h: 8 }, msg: { x: 8, y: 4, w: 4, h: 3 }, add: { x: 8, y: 7, w: 4, h: 2 }, kpd: { x: 8, y: 9, w: 4, h: 3 }, week: { x: 0, y: 12, w: 5, h: 2 }, int: { x: 5, y: 12, w: 3, h: 2 }, choice: { x: 8, y: 12, w: 4, h: 4 } };
+  var LAY_MIN = { hero: [3, 2], tasks: [3, 3], msg: [2, 1], add: [2, 1], kpd: [2, 2], week: [2, 1], int: [2, 1], choice: [3, 2] };
   function layItems() {
     var it = {}, cur = S.settings.layout.items || {};
     Object.keys(LAY_DEF).forEach(function (k) { it[k] = Object.assign({}, LAY_DEF[k], cur[k] || {}); });
@@ -1064,7 +1077,8 @@
     order.forEach(function (id) { while (placed.some(function (o) { return layHit(items[id], items[o]); })) items[id].y++; placed.push(id); });
   }
   function layStyle(it) { return 'left:' + (it.x / 12 * 100) + '%;width:calc(' + (it.w / 12 * 100) + '% - ' + LGAP + 'px);top:' + it.y * LROW + 'px;height:' + (it.h * LROW - LGAP) + 'px;'; }
-  var LAY_NAMES = { hero: 'Приветствие', tasks: 'Действия', msg: 'Дополнение', add: 'Кнопка «Добавить»', kpd: 'КПД сегодня', week: 'Этап пути' };
+  var LAY_NAMES = { hero: 'Приветствие', tasks: 'Список действий', msg: 'Сообщение дня', add: 'Добавить действие', kpd: 'КПД сегодня', week: 'Статус недели', int: 'Добавить взаимодействие', choice: 'Добавить выбор' };
+  var LAY_ICO = { hero: 'star', tasks: 'check', msg: 'chat', add: 'plus', kpd: 'bars', week: 'fire', int: 'loop', choice: 'folder' };
   /* время у действий: точное или «раз в N часов» с обратным отсчётом */
   function fmtLeft(ms) {
     var m = Math.max(0, Math.round(ms / 60000)), h = Math.floor(m / 60); m = m % 60;
@@ -1164,18 +1178,20 @@
     hab: '<path d="M20 12a8 8 0 0 1-13.6 5.7M4 12a8 8 0 0 1 13.6-5.7"/><path d="M17.8 3v3.6h-3.6M6.2 21v-3.6h3.6"/>'
   };
   function intIc(k) { return '<svg class="int-ic" viewBox="0 0 24 24">' + INT_IC[k] + '</svg>'; }
+  function intNodes(k, p) { var out = []; (function walk(list, par) { (list || []).forEach(function (n) { if (n.from === k.id && n.day === k.date) out.push({ n: n, par: par }); walk(n.subs, n); }); })(p.actions, null); return out; }
+  function intCount(k, p) { return intNodes(k, p).filter(function (x) { return x.n.done; }).length; }
   function intProjActs(k, p) { return p.actions.filter(function (a) { return a.from === k.id && a.day === k.date; }); }
   function intsDone(k) {
     var any = false, ok = true;
     (k.ints || []).forEach(function (it) {
       if (it.k === 'hab') { var h = byId(S.habits, it.hid); if (!h) return; any = true; if (!h.log[k.date]) ok = false; }
-      else { var p = byId(S.projects, it.pid); if (!p) return; var l = intProjActs(k, p); if (!l.length) { ok = false; return; } any = true; if (!l.every(function (a) { return a.done; })) ok = false; }
+      else { var p = byId(S.projects, it.pid); if (!p) return; any = true; if (intCount(k, p) < INT_MIN) ok = false; }
     });
     return any && ok;
   }
-  function intNodeHtml(k, p, n, depth, arch) {
+  function intNodeHtml(k, p, n, depth, arch, parLabel) {
     var kids = (n.subs || []).map(function (c) { return intNodeHtml(k, p, c, depth + 1, arch); }).join('');
-    return '<div class="sub int-n' + (n.done ? ' done' : '') + '" style="--d:' + depth + '"><button class="check sm ' + (n.done ? 'on' : '') + '" data-action="int-toggle" data-pid="' + p.id + '" data-nid="' + n.id + '"' + (arch ? ' disabled' : '') + '>' + (n.done ? ic('tick') : '') + '</button><span class="txt">' + esc(n.text) + '</span>' +
+    return '<div class="sub int-n' + (n.done ? ' done' : '') + '" style="--d:' + depth + '"><button class="check sm ' + (n.done ? 'on' : '') + '" data-action="int-toggle" data-pid="' + p.id + '" data-nid="' + n.id + '"' + (arch ? ' disabled' : '') + '>' + (n.done ? ic('tick') : '') + '</button><span class="txt">' + esc(n.text) + (parLabel ? '<em class="t-link">в «' + esc(parLabel) + '»</em>' : '') + '</span>' +
       (arch ? '' : '<button class="ico-btn sm" data-action="int-sub" data-pid="' + p.id + '" data-nid="' + n.id + '" title="Добавить поддействие">＋</button><button class="ico-btn sm" data-action="int-del" data-pid="' + p.id + '" data-nid="' + n.id + '" title="Удалить">' + ic('trash') + '</button>') + '</div>' + kids;
   }
   function habSt(h, d) { return h.log[d] ? 'ok' : (h.fail && h.fail[d]) ? 'fail' : ''; }
@@ -1186,6 +1202,15 @@
       (arch ? '' : '<span class="hb-acts"><button class="hb-btn ok' + (st === 'ok' ? ' on' : '') + '" data-action="hab-set" data-id="' + h.id + '" data-v="ok">' + tx[0] + '</button><button class="hb-btn no' + (st === 'fail' ? ' on' : '') + '" data-action="hab-set" data-id="' + h.id + '" data-v="fail">' + tx[1] + '</button></span>');
   }
   /* связи выглядят как обычные поддействия: те же строки, та же линия слева */
+  function didModal() {
+    var I = UI.idid, p = byId(S.projects, I.pid); if (!p) return;
+    var opts = []; (function w(l, d) { l.forEach(function (n) { opts.push('<option value="' + n.id + '"' + (I.par === n.id ? ' selected' : '') + '>' + '— '.repeat(d) + esc(n.text) + '</option>'); w(n.subs || [], d + 1); }); })(p.actions, 0);
+    openModal('<h3>В проекте «' + esc(p.name) + '» я сделал…</h3><div class="seg did-seg">' + [['act', 'Действие'], ['sub', 'Поддействие']].map(function (x) { return '<button class="seg-b ' + (I.mode === x[0] ? 'on' : '') + '" data-action="id-mode" data-m="' + x[0] + '">' + x[1] + '</button>'; }).join('') + '</div>' +
+      '<label class="did-l">' + (I.mode === 'act' ? 'Заголовок действия' : 'Что именно сделано') + '</label><input id="id-t" class="did-in" maxlength="140" placeholder="Я сделал…" value="' + esc(I.text) + '" autocomplete="off">' +
+      (I.mode === 'sub' ? '<label class="did-l">В каком действии</label>' + (opts.length ? '<select id="id-p" class="did-in">' + opts.join('') + '</select>' : '<div class="muted">В проекте пока нет действий — сначала запиши действие.</div>') : '') +
+      '<div class="did-ft"><button class="btn-soft" data-action="modal-close">Отмена</button><button class="btn-primary" data-action="id-ok">Записать</button></div>');
+    setTimeout(function () { var e = $('#id-t'); if (e) e.focus(); }, 60);
+  }
   function intsHtml(k, arch) {
     if (!k.ints || !k.ints.length) return '';
     return '<div class="subs ints">' + k.ints.map(function (it) {
@@ -1195,9 +1220,10 @@
         return '<div class="sub int-h-row int-hab st-' + (st || 'none') + (st === 'ok' ? ' done' : '') + '"><span class="int-dot hb-' + (bad ? 'bad' : 'good') + '">' + (bad ? WARN_SVG : ic('tick')) + '</span><span class="txt"><b>' + esc(h.name) + '</b><em class="t-link">' + (bad ? 'вредная привычка' : 'полезная привычка') + '</em></span>' + habBtns(h, k.date, arch) + '</div>';
       }
       var p = byId(S.projects, it.pid); if (!p) return '';
-      var l = intProjActs(k, p), dn = l.filter(function (a) { return a.done; }).length;
-      return '<div class="sub int-h-row int-proj"><span class="int-dot">' + intIc('proj') + '</span><span class="txt"><b>' + esc(p.name) + '</b><em class="t-link">проект' + (l.length ? ' · ' + dn + ' / ' + l.length : '') + '</em></span>' + (arch ? '' : '<button class="chip-t sm" data-action="int-add" data-tid="' + k.id + '" data-pid="' + p.id + '">＋ действие</button>') + '</div>' +
-        l.map(function (a) { return intNodeHtml(k, p, a, 1, arch); }).join('');
+      var nodes = intNodes(k, p), dn = nodes.filter(function (x) { return x.n.done; }).length, okc = dn >= INT_MIN;
+      var isInt = function (q) { return q && q.from === k.id && q.day === k.date; };
+      return '<div class="sub int-h-row int-proj"><span class="int-dot">' + intIc('proj') + '</span><span class="txt"><b>' + esc(p.name) + '</b><em class="t-link">проект</em><em class="int-cnt' + (okc ? ' ok' : '') + '" title="Записей за день">' + dn + ' / ' + INT_MIN + '</em></span>' + (arch ? '' : '<button class="chip-t sm int-did" data-action="int-did" data-tid="' + k.id + '" data-pid="' + p.id + '">' + ic('pencil') + ' Что я сделал</button>') + '</div>' +
+        nodes.filter(function (x) { return !isInt(x.par); }).map(function (x) { return intNodeHtml(k, p, x.n, 1, arch, x.par ? x.par.text : ''); }).join('');
     }).join('') + '</div>';
   }
   /* ---------- путь огонька: от недели до года ---------- */
@@ -1222,11 +1248,13 @@
   }
   function ladderHtml() {
     var st = streakInfo().streak, i = stageOf(st), pos = Math.round(ladderPos(st) * 1000) / 10, nx = STEPS[i], sb = stabInfo();
-    var nodes = STEPS.map(function (s, k) { return '<span class="lad-n' + (st >= s[0] ? ' on' : '') + (k === i - 1 ? ' cur' : '') + '" style="left:' + ((k + 1) / STEPS.length * 100) + '%"></span>'; }).join('');
+    function tip(k) { var x = STEPS[k], d = x[0] - st; return x[1] + ' · ' + x[0] + ' ' + plural(x[0], ['день', 'дня', 'дней']) + ' подряд — ' + (d <= 0 ? 'пройдено ✓' : 'осталось ' + d + ' ' + plural(d, ['день', 'дня', 'дней'])); }
+    var nodes = STEPS.map(function (s, k) { return '<button class="lad-n' + (st >= s[0] ? ' on' : '') + (k === i - 1 ? ' cur' : '') + (k < 2 ? ' tl' : k > 5 ? ' tr' : '') + '" style="left:' + ((k + 1) / STEPS.length * 100) + '%" data-tip="' + esc(tip(k)) + '" tabindex="0"></button>'; }).join('');
     var lbs = STEPS.map(function (s, k) { return '<span class="' + (st >= s[0] ? 'on' : '') + '" style="left:' + ((k + 1) / STEPS.length * 100) + '%">' + s[2] + '</span>'; }).join('');
-    return '<div class="lad"><div class="lad-top"><b>' + stageLabel(i) + (i > 0 ? '' : '') + '</b><span>' + (nx ? 'до «' + nx[1] + '»: ' + (nx[0] - st) + ' ' + plural(nx[0] - st, ['день', 'дня', 'дней']) : 'вершина пройдена') + '</span></div>' +
-      '<div class="lad-tr"><i class="lad-fill" style="width:' + pos + '%"></i>' + nodes + '<span class="lad-dot" style="left:' + pos + '%">' + FLAME('lad-fl') + '</span></div><div class="lad-lb"><span class="on" style="left:0">0</span>' + lbs + '</div>' +
-      '<div class="gt"><div class="gt-h"><b>Золотое время</b><span>' + (sb.mid == null ? 'нужно 3 дня' : '≈ ' + hhmm(sb.mid)) + '</span></div><div class="progress sm"><i style="width:' + sb.pct + '%"></i></div><small>' + (sb.mid == null ? 'День засчитывается, когда набрано ' + FINISH_MIN + ' задания. Время фиксируется.' : sb.ok + ' из ' + sb.n + ' последних дней — в одном окне ±1 час') + '</small></div></div>';
+    var gtip = sb.mid == null ? 'Золотое время появится после 3 завершённых дней' : 'Золотое время ≈ ' + hhmm(sb.mid) + ': ' + sb.ok + ' из ' + sb.n + ' последних дней в одном окне';
+    return '<div class="lad"><div class="lad-top"><b>' + stageLabel(i) + '</b><span>' + (nx ? 'до «' + nx[1] + '»: ' + (nx[0] - st) + ' ' + plural(nx[0] - st, ['день', 'дня', 'дней']) : 'вершина пройдена') + '</span></div>' +
+      '<div class="lad-tr"><i class="lad-fill" style="width:' + pos + '%"></i>' + nodes + '<span class="lad-dot" style="left:' + pos + '%" data-tip="' + esc('Ты здесь: ' + st + ' ' + plural(st, ['день', 'дня', 'дней']) + ' подряд') + '">' + FLAME('lad-fl') + '</span></div><div class="lad-lb"><span class="on" style="left:0">0</span>' + lbs + '</div>' +
+      '<div class="gt" data-tip="' + esc(gtip) + '"><span class="gt-ic">⏱</span><b>Золотое время</b><div class="progress sm"><i style="width:' + sb.pct + '%"></i></div><span class="gt-v">' + (sb.mid == null ? '—' : '≈ ' + hhmm(sb.mid)) + '</span></div></div>';
   }
   function weekModal() {
     var st = streakInfo().streak, cur = stageOf(st);
@@ -1528,27 +1556,81 @@
     UI.hall.tab = UI.hall.list.some(function (o) { return o.kind === 'sub'; }) || !UI.hall.list.length ? 'sub' : 'act';
     openModal('<h3>Новое личное достижение</h3>' +
       '<div class="fld"><span>Что именно помогло? Выбери поддействие или действие</span>' + segOpts('', [['sub', 'Поддействия'], ['act', 'Действия']], 'hall-tab', UI.hall.tab) + '<input id="hall-q" placeholder="Поиск" autocomplete="off"><div class="hall-list" id="hall-list"></div></div>' +
-      '<div class="fld"><span>Название</span><input id="hall-title" maxlength="80" placeholder="Название достижения"></div>' +
+      '<div class="fld"><span>Иконка</span>' + icRow('', 'hall-ic') + '</div><div class="fld"><span>Название</span><input id="hall-title" maxlength="80" placeholder="Название достижения"></div>' +
       '<div class="fld"><span>Ради чего это было</span><textarea id="hall-why" rows="3" maxlength="400" placeholder="Цель, мечта, причина"></textarea></div>' +
       '<div class="modal-actions"><span class="hall-cnt" id="hall-cnt"></span><button class="btn-soft" data-action="modal-close">Отмена</button><button class="btn-primary" data-action="hall-save">На доску почёта</button></div>', true);
     hallPaint();
+  }
+  function hallDays(h) {
+    if (h.kind !== 'hab') return h.days || 0;
+    if (h.won) return h.days || 0;
+    var hb = byId(S.habits, h.hid); if (!hb) return h.days || 0;
+    var t = today();
+    if (hb.type === 'bad') return Math.max(0, diffDays(t, h.from));
+    var n = 0, d = hb.log[t] ? t : addDays(t, -1); while (hb.log[d] && d >= h.from) { n++; d = addDays(d, -1); }
+    return n;
+  }
+  /* срыв вредной привычки (или пропуск полезной) снимает её с доски — отсчёт начинается заново */
+  function hallSync() {
+    var lost = [];
+    (S.hall || []).slice().forEach(function (h) {
+      if (h.kind !== 'hab' || h.won) return;
+      var hb = byId(S.habits, h.hid); if (!hb || !hb.fail) return;
+      if (Object.keys(hb.fail).some(function (d) { return hb.fail[d] && d >= h.from; })) { lost.push(h); S.hall = S.hall.filter(function (x) { return x.id !== h.id; }); S.hallLost = (S.hallLost || []).concat([{ name: h.name, date: today(), days: hallDays(Object.assign({}, h, { won: false })) }]); }
+    });
+    if (lost.length) { save(); setTimeout(function () { toast('«' + lost[0].name + '» ушла с доски — сорвался. Начни отсчёт заново.'); }, 200); }
+  }
+  var HALL_IC = ['🏆', '🔥', '💪', '🧠', '🚭', '🎯', '🌟', '🧘', '📚', '💎', '🛡️', '👑', '🩸', '⚔️', '🚀', '🌱'];
+  function icRow(sel, act) { return '<div class="ic-row">' + HALL_IC.map(function (e) { return '<button type="button" class="ic-b' + (sel === e ? ' on' : '') + '" data-action="' + act + '" data-e="' + e + '">' + e + '</button>'; }).join('') + '</div>'; }
+  function hallHabModal() {
+    var I = UI.hh, hs = S.habits.filter(function (h) { return !h.sys; });
+    openModal('<h3>Следить за привычкой</h3><div class="muted">Вредная — считаю дни без срыва, полезная — дни подряд. Срыв снимет её с доски.</div><div class="iq-list hh-list">' + (hs.length ? hs.map(function (h) {
+      return '<button class="iq-b' + (I.hid === h.id ? ' sel' : '') + '" data-action="hh-pick" data-id="' + h.id + '"><span class="iq-i">' + (h.type === 'bad' ? WARN_SVG : ic('tick')) + '</span><b>' + esc(h.name) + '</b><small>' + (h.type === 'bad' ? 'вредная' : 'полезная') + '</small></button>'; }).join('') : '<div class="empty">Сначала добавь привычку в разделе «Привычки»</div>') + '</div>' +
+      '<label class="did-l">Иконка почёта</label>' + icRow(I.icon, 'hh-ic') + '<label class="did-l">Ради чего</label><textarea id="hh-why" class="did-in" rows="2" maxlength="300" placeholder="Цель, мечта, причина">' + esc(I.why || '') + '</textarea>' +
+      '<div class="did-ft"><button class="btn-soft" data-action="modal-close">Отмена</button><button class="btn-primary" data-action="hh-save">На доску почёта</button></div>');
   }
   function viewHall() {
     UI.hallOpen = UI.hallOpen || {};
     var list = (S.hall || []).slice().sort(function (a, b) { return (b.at || 0) - (a.at || 0); });
     var total = list.reduce(function (t, h) { return t + (h.days || 0); }, 0);
+    hallSync(); list = (S.hall || []).slice().sort(function (a, b) { return (b.at || 0) - (a.at || 0); });
+    total = list.reduce(function (t, h) { return t + hallDays(h); }, 0);
     var cards = list.map(function (h) {
-      var open = !!UI.hallOpen[h.id];
-      return '<article class="hall-c ' + (open ? 'open' : '') + '"><div class="hc-medal"><svg viewBox="0 0 24 24">' + SVG.medal + '</svg></div>' +
-        '<div class="hc-days"><b>' + (h.days || 0) + '</b><span>' + plural(h.days || 0, ['день', 'дня', 'дней']) + '</span></div>' +
-        '<h3>' + esc(h.name) + '</h3>' + (h.why ? '<blockquote>' + esc(h.why) + '</blockquote>' : '') +
+      var open = !!UI.hallOpen[h.id], hb = h.kind === 'hab' ? byId(S.habits, h.hid) : null, days = hallDays(h), bad = hb && hb.type === 'bad';
+      var medal = h.icon ? '<span class="hc-emo">' + esc(h.icon) + '</span>' : '<svg viewBox="0 0 24 24">' + SVG.medal + '</svg>';
+      var stage = '', foot = '';
+      if (h.kind === 'hab') {
+        var ST = [7, 14, 21, 30, 60, 90, 180, 365], nx = ST.filter(function (x) { return x > days; })[0], pv = ST.filter(function (x) { return x <= days; }).pop() || 0;
+        stage = '<div class="hc-st"><span class="hc-tag ' + (h.won ? 'won' : bad ? 'rem' : 'run') + '">' + (h.won ? 'Победа' : bad ? 'Ремиссия' : 'Закрепляю') + '</span>' +
+          (h.won ? '' : '<div class="progress sm"><i style="width:' + (nx ? Math.round((days - pv) / (nx - pv) * 100) : 100) + '%"></i></div><small>' + (nx ? 'до ' + nx + ' ' + plural(nx, ['дня', 'дней', 'дней']) + ': ' + (nx - days) : 'вершина') + '</small>') + '</div>';
+        if (!h.won) foot = '<button class="chip-t sm win" data-action="hall-win" data-id="' + h.id + '">' + (bad ? 'Я победил привычку' : 'Привычка закреплена') + '</button>';
+      }
+      return '<article class="hall-c ' + (open ? 'open' : '') + (h.kind === 'hab' ? ' hab' : '') + (h.won ? ' won' : '') + '"><div class="hc-medal">' + medal + '</div>' +
+        '<div class="hc-days"><b>' + days + '</b><span>' + plural(days, ['день', 'дня', 'дней']) + (h.kind === 'hab' && !h.won ? (bad ? ' без срыва' : ' подряд') : '') + '</span></div>' +
+        '<h3>' + esc(h.name) + '</h3>' + stage + (h.why ? '<blockquote>' + esc(h.why) + '</blockquote>' : '') +
         '<div class="hc-dates">' + (h.from ? esc(fmtLong(h.from)) + (h.to && h.to !== h.from ? ' — ' + esc(fmtLong(h.to)) : '') : '') + '</div>' +
-        (open ? '<div class="hc-more"><small>Закрытые действия</small>' + (h.names || []).map(function (n) { return '<span>' + esc(n) + '</span>'; }).join('') + '<small>На доске с ' + esc(fmtLong(h.date || today())) + '</small></div>' : '') +
-        '<div class="hc-foot"><button class="chip-t sm" data-action="hall-open" data-id="' + h.id + '">' + (open ? 'Свернуть' : 'Подробнее') + '</button><span></span><button class="ico-btn sm ar-pin' + ((S.profile.show || []).indexOf('h:' + h.id) >= 0 ? ' on' : '') + '" data-action="show-toggle" data-k="h:' + h.id + '" title="В профиль">' + ic('pin') + '</button><button class="ico-btn sm" data-action="hall-edit" data-id="' + h.id + '" title="Изменить">' + ic('pencil') + '</button><button class="ico-btn sm" data-action="hall-del" data-id="' + h.id + '" title="Убрать с доски">' + ic('trash') + '</button></div></article>';
+        (open ? '<div class="hc-more"><small>' + (h.kind === 'hab' ? 'Привычка' : 'Закрытые действия') + '</small>' + (h.names || []).map(function (n) { return '<span>' + esc(n) + '</span>'; }).join('') + '<small>На доске с ' + esc(fmtLong(h.date || today())) + '</small></div>' : '') +
+        '<div class="hc-foot"><button class="chip-t sm" data-action="hall-open" data-id="' + h.id + '">' + (open ? 'Свернуть' : 'Подробнее') + '</button>' + foot + '<span></span><button class="ico-btn sm ar-pin' + ((S.profile.show || []).indexOf('h:' + h.id) >= 0 ? ' on' : '') + '" data-action="show-toggle" data-k="h:' + h.id + '" title="В профиль">' + ic('pin') + '</button><button class="ico-btn sm" data-action="hall-edit" data-id="' + h.id + '" title="Изменить">' + ic('pencil') + '</button><button class="ico-btn sm" data-action="hall-del" data-id="' + h.id + '" title="Убрать с доски">' + ic('trash') + '</button></div></article>';
     }).join('');
     return '<div class="page-head"><span class="page-ico">' + ic('medal') + '</span><div><h1 class="title">Доска почёта</h1></div><button class="btn-primary" data-action="hall-add">Добавить личное достижение</button></div>' +
       '<section class="glass hall-top"><div><b>' + list.length + '</b><small>на доске</small></div><div><b>' + total + '</b><small>дней дисциплины</small></div></section>' +
       (cards ? '<div class="hall-grid">' + cards + '</div>' : '<div class="glass hall-empty"><svg viewBox="0 0 24 24">' + SVG.medal + '</svg><b>Доска пока пуста</b></div>');
+  }
+  function choiceHtml() {
+    var t = today(), list = (S.choices || []).filter(function (c) { return c.daily || c.date === t; }), cd = S.choiceDay || {};
+    return '<section class="glass choice"><div class="ch-h"><b>Выбор на день</b><button class="chip-t sm" data-action="ch-add">＋ Добавить выбор</button></div>' +
+      (list.length ? list.map(function (c) {
+        var pk = cd[c.id] && cd[c.id].date === t ? cd[c.id].idx : -1;
+        return '<div class="ch-card' + (pk >= 0 ? ' done' : '') + '"><div class="ch-q"><span>' + esc(c.title) + '</span><button class="ico-btn sm" data-action="ch-del" data-id="' + c.id + '" title="Удалить">' + ic('trash') + '</button></div><div class="ch-os">' +
+          c.opts.map(function (o, i) { return '<button class="ch-o-b' + (pk === i ? ' on' : '') + '"' + (pk >= 0 ? ' disabled' : '') + ' data-action="ch-pick" data-id="' + c.id + '" data-i="' + i + '"><b>' + esc(o.text) + '</b>' + (o.tm ? '<small>' + esc(o.tm) + '</small>' : '') + (pk === i ? '<i>' + ic('tick') + '</i>' : '') + '</button>'; }).join('') + '</div></div>';
+      }).join('') : '<div class="ch-empty">Два варианта на один слот времени — выбери один, он станет обычным действием дня.</div>') + '</section>';
+  }
+  function layBtns() {
+    var L = S.settings.layout, hid = L.hidden || [];
+    openModal('<h3>Кнопки Ежедневника</h3><div class="muted">Добавляй и убирай блоки. Расположение и размер — перетаскиванием.</div><div class="lb-list">' + Object.keys(LAY_DEF).map(function (id) {
+      var on = hid.indexOf(id) < 0 && (id !== 'week' || !S.settings.hideWeek);
+      return '<div class="lb-row' + (on ? ' on' : '') + '"><span class="lb-ic"><svg viewBox="0 0 24 24">' + SVG[LAY_ICO[id]] + '</svg></span><b>' + LAY_NAMES[id] + '</b><em>' + (on ? 'на экране' : 'скрыто') + '</em><button class="' + (on ? 'btn-soft' : 'btn-primary') + ' sm" data-action="lay-tog" data-b="' + id + '">' + (on ? 'Убрать' : 'Добавить') + '</button></div>';
+    }).join('') + '</div>');
   }
   function viewToday() {
     var t = UI.todayDate || today(), arch = t !== today();
@@ -1583,8 +1665,9 @@
     var kpdH = '<div class="glass kpd-today">' + ringSvg(st.pct, 104) + '<div class="kt-txt"><small>КПД сегодня</small><b>' + st.total + ' из ' + DAY_MAX + '</b><span>заданий выполнено</span></div></div>';
     var foot = '<div class="today-foot"><button class="chip" data-action="day-pick">' + ic('cal') + ' ' + fmtShort(t) + '</button>' + (arch ? '<button class="btn-soft" data-action="day-today">Вернуться к сегодня</button>' : finishBtn()) + '</div>';
     var dock = arch ? '' : '<div class="fab-dock"><button class="fab-add" data-action="task-add" title="Добавить действие"><span>＋</span>Действие</button>' + (UI.layEdit ? '<button class="fab-edit on" data-action="lay-done">Готово</button>' : '<button class="fab-edit" data-action="lay-edit" title="Менять расположение и размер блоков">✎ Редактировать</button>') + '</div>';
-    var parts = { hero: heroH, tasks: tasksH, msg: msgH, add: addH, kpd: kpdH, week: '<div class="wk-solo">' + (wkOn ? weekChip() : '') + '</div>' };
+    var parts = { hero: heroH, tasks: tasksH, msg: msgH, add: addH, kpd: kpdH, week: '<div class="wk-solo">' + (wkOn ? weekChip() : '') + '</div>', int: '<button class="btn-add alt" data-action="int-quick"><span class="plus">⇄</span><span>Добавить взаимодействие</span></button>', choice: choiceHtml() };
     if (lay.custom && !arch) {
+      lay.hidden = lay.hidden || []; if (!lay.v34) { lay.v34 = 1; ['int', 'choice'].forEach(function (h) { if (lay.hidden.indexOf(h) < 0) lay.hidden.push(h); }); }
       var ed = !!UI.layEdit, LY = layItems(), hid = lay.hidden || [];
       var ids = Object.keys(LAY_DEF).filter(function (id) { return hid.indexOf(id) < 0 && (id !== 'week' || wkOn); }), Hh = 0;
       ids.forEach(function (id) { Hh = Math.max(Hh, LY[id].y + LY[id].h); });
@@ -1593,8 +1676,7 @@
           '<div class="lb-in"><div class="lb-sc">' + parts[id] + '</div></div>' + (ed ? ['nw', 'ne', 'sw', 'se'].map(function (c) { return '<span class="lb-rs ' + c + '" data-c="' + c + '"></span>'; }).join('') : '') + '</div>';
       }).join('');
       var bar = ed ? '<div class="lay-bar glass"><b>Редактирование</b>' +
-        '<button class="btn-soft sm" data-action="model-open">Модельки</button>' +
-        hid.map(function (id) { return '<button class="btn-soft sm" data-action="lay-show" data-b="' + id + '">＋ ' + LAY_NAMES[id] + '</button>'; }).join('') +
+        '<button class="btn-primary sm" data-action="lay-btns">' + ic('plus') + ' Кнопки</button><button class="btn-soft sm" data-action="model-open">Модельки</button>' +
         '<button class="btn-soft sm" data-action="lay-reset">Сбросить</button><button class="btn-primary sm" data-action="lay-done">Готово</button></div>' : '';
       var ovs = (lay.models || []).map(function (o) {
         return '<div class="ov' + (ed ? ' edit' : '') + '" data-ov="' + o.id + '" style="' + ovStyle(o) + '"><div class="ov-in">' + modelInner(o.key) + '</div>' + (ed ? '<span class="ov-rot"></span><span class="ov-rs"></span><button class="ov-x" data-action="ov-del" data-id="' + o.id + '" title="Удалить модельку">' + ic('trash') + '</button>' : '') + '</div>';
@@ -1899,14 +1981,18 @@
     // детальный отчёт
     var rd = UI.habDate, act = hs.filter(function (h) { return h.created <= rd; });
     var okL = act.filter(function (h) { return h.log[rd]; }), noL = act.filter(function (h) { return !h.log[rd]; });
-    function li(h, ok) { return '<li class="' + (ok ? 'ok' : 'no') + '"><span class="dot"></span><span class="emo">' + esc(h.icon) + '</span>' + esc(h.name) + '</li>'; }
+    function li(h, ok) {
+      var run = (function () { var n = 0, d = rd; while (h.log && h.log[d]) { n++; d = addDays(d, -1); } return n; })(), c30 = 0; for (var q = 0; q < 30; q++) if (h.log && h.log[addDays(rd, -q)]) c30++;
+      return '<li class="rep-li ' + (ok ? 'ok' : 'no') + (UI.repOpen === h.id ? ' open' : '') + '" tabindex="0" data-action="rep-open" data-id="' + h.id + '"><div class="rl-h"><span class="dot"></span><span class="emo">' + esc(h.icon) + '</span><b>' + esc(h.name) + '</b><em class="rl-ty ' + (h.type === 'bad' ? 'bad' : 'good') + '">' + (h.type === 'bad' ? 'вредная' : 'полезная') + '</em></div>' +
+        '<div class="rl-b"><span><b>' + run + '</b> ' + plural(run, ['день', 'дня', 'дней']) + ' подряд</span><span><b>' + Math.round(c30 / 30 * 100) + '%</b> за 30 дней</span><span><b>' + c30 + '</b> из 30</span></div></li>';
+    }
     var good = rate('good'), bad = rate('bad');
     var tabs = [['all', 'Все'], ['good', 'Полезные'], ['bad', 'Вредные']].map(function (f) {
       return '<button class="tab ' + (UI.habFilter === f[0] ? 'on' : '') + '" data-action="hab-filter" data-f="' + f[0] + '">' + f[1] + '</button>';
     }).join('');
     return '<div class="page-head"><span class="page-ico solid">' + ic('check') + '</span><div><h1 class="title">Привычки</h1><p class="sub2">Формируй полезные привычки.<br>Избавляйся от вредных.</p></div>' +
       '<div class="glass hstats"><div><b>' + wpct + '%</b><small>Общий прогресс за неделю</small></div><div><b>' + wd + ' / ' + wt + '</b><small>Выполнено за неделю</small></div><div><b>+' + xpWeek + '</b><small>XP за привычки</small></div></div></div>' +
-      '<div class="hab-grid"><section class="glass hab-main"><div class="hm-head"><h3>Мои привычки</h3><div class="hm-btns"><button class="btn-soft" data-action="hab-lib">📚 Готовые (100)</button><button class="btn-primary" data-action="hab-add">＋ Своя привычка</button></div></div>' +
+      '<div class="hab-grid"><section class="glass hab-main"><div class="hm-head"><h3>Мои привычки</h3><div class="hm-btns"><button class="lib-btn" data-action="hab-lib"><span class="lib-ic">' + ic('shelf') + '</span><span class="lib-t"><b>Библиотека</b><small>100 готовых привычек</small></span></button><button class="btn-primary" data-action="hab-add">＋ Своя привычка</button></div></div>' +
       '<div class="tabs sm">' + tabs + '</div><div class="hdays">' + header + '</div><div class="hlist">' + rows + '</div></section>' +
       '<section class="glass hab-an"><h3>Аналитика привычек <small>30 дней</small></h3>' + chartSvg({ id: 'ch-hab', pts: pts, labels: labels, ymax: 100, W: 520, H: 220 }) + '</section>' +
       '<section class="glass hab-ring"><h3>Полезные привычки</h3><div class="rr">' + ringSvg(good, 104) + '<p>Выполнено<br>за 30 дней</p></div></section>' +
@@ -2154,11 +2240,11 @@
       h += lrow('Цвет надписей', '<div class="lk-r">' + swatches(light ? 'textL' : 'text', light ? LOOK_TXT_L : LOOK_TXT, light ? (L.textL || LOOK_TXT_L[0]) : (L.text || LOOK_TXT[0])) +
         '<div class="rng"><span>' + (light ? 'Затемнение' : 'Яркость') + '</span><input type="range" min="0" max="100" value="' + tb + '" data-look="textBright"><b class="rv">' + tb + '%</b></div></div>');
       h += lrow('Прозрачность текста', '<div class="lk-r"><div class="rng"><span>Непрозрачность</span><input type="range" min="30" max="100" value="' + LD.textOpacity + '" data-look="textOpacity"><b class="rv">' + LD.textOpacity + '%</b></div></div>');
-      h += lrow('Свечение текста', '<div class="lk-r"><div class="rng"><span>Сила</span><input type="range" min="0" max="100" value="' + LD.textGlow + '" data-look="textGlow"><b class="rv">' + LD.textGlow + '%</b></div></div>', gfx === '2d' ? 'dis' : '');
+      h += lrow('Свечение текста', '<div class="lk-r"><div class="rng"><span>Сила</span><input type="range" min="0" max="100" value="' + LD.textGlow + '" data-look="textGlow"><b class="rv">' + LD.textGlow + '%</b></div></div>');
       h += lrow('Перелив текста', '<div class="lk-r"><div class="set-row"><span class="muted">' + (LD.textGrad ? 'Включён' : 'Выключен') + '</span><button class="switch ' + (LD.textGrad ? 'on' : '') + '" data-action="look-tgrad"><i></i></button></div>' +
-        (LD.textGrad ? swatches('textGradA', LOOK_GRAD, LD.textGradA) + swatches('textGradB', LOOK_GRAD, LD.textGradB) : '') + '</div>', gfx === '2d' ? 'dis' : '');
-      h += lrow('Тень текста', segOpts('', [['off', 'Без тени'], ['soft', 'Мягкая'], ['full', 'Объёмная']], 'set-tsh', st.tsh || 'soft'), gfx === '2d' ? 'dis' : '');
-      h += lrow('Шрифт цитат', segOpts('', [['normal', 'Обычный'], ['serif', 'Курсив'], ['hand', 'Рукописный'], ['bold', 'Жирный']], 'set-qfont', st.qfont || 'normal'));
+        (LD.textGrad ? swatches('textGradA', LOOK_GRAD, LD.textGradA) + swatches('textGradB', LOOK_GRAD, LD.textGradB) : '') + '</div>');
+      h += lrow('Тень текста', '<div class="ts-grid">' + [['off', 'Без тени', 'none'], ['soft', 'Мягкая', '0 2px 4px rgba(0,0,20,.55)'], ['full', 'Объёмная', '0 1px 0 #10163e,0 2px 0 #0d1236,0 3px 0 #0a0e2c,0 8px 10px rgba(0,0,20,.6)']].map(function (x) {
+        return '<button class="ts-card ' + ((st.tsh || 'soft') === x[0] ? 'on' : '') + '" data-action="set-tsh" data-s="' + x[0] + '"><b style="text-shadow:' + x[2] + '">Aa</b><span>' + x[1] + '</span></button>'; }).join('') + '</div>');
     } else if (tab === 'flame') {
       var fc = FL_COLS[st.flameCol] || FL_COLS.sun, sh = st.flame || '1', stN = streakInfo().streak;
       h += '<div class="fl-live"><div class="fl-cell big" data-fx="' + (st.flameFx || 'plain') + '">' + FLAMEX(sh, fc, 'pvb') + '</div><div class="fl-liv-t"><b>' + stN + '</b><span>' + plural(stN, ['день', 'дня', 'дней']) + ' подряд</span></div>' +
@@ -2193,10 +2279,15 @@
       if (preset === 'custom') h += lrow('Основной цвет фона', swatches('bg', LOOK_BG, L.bg));
       h += lrow('Фоновое изображение', '<div class="lk-r"><div class="bg-pick"><span class="bg-prev">' + (L.bgImage ? '<img src="' + L.bgImage + '" alt="">' : ic('photo')) + '</span><button class="btn-soft sm" data-action="bg-pick">Выбрать изображение</button>' +
         (L.bgImage ? '<button class="btn-soft sm" data-action="bg-edit">✥ Положение и размер</button><button class="btn-soft sm" data-action="bg-clear">Убрать</button>' : '') + '</div><div class="rng"><span>Прозрачность фона</span><input type="range" min="0" max="100" value="' + bgOp + '" data-look="bgOpacity"><b class="rv">' + bgOp + '%</b></div></div>');
-      h += lrow('Анимация фона', segOpts('', [['waves', 'Волны'], ['snow', 'Снег'], ['rain', 'Дождь'], ['none', 'Нет']], 'set-fx', st.fx || 'waves'));
+      var fxo = fxOf();
+      var FXC = [['waves', 'Волны', '<path d="M2 14c3-6 6-6 10 0s7 6 10 0M2 19c3-6 6-6 10 0s7 6 10 0" />'], ['rain', 'Дождь', '<path d="M8 5l-2 6M14 5l-2 6M20 5l-2 6M5 14l-2 6M11 14l-2 6M17 14l-2 6"/>'], ['storm', 'Гроза', '<path d="M13 3L5 14h6l-2 7 9-12h-6z"/>'], ['snow', 'Снег', '<path d="M12 3v18M4.2 7.5l15.6 9M19.8 7.5l-15.6 9"/>']];
+      h += lrow('Анимация фона', '<div class="fx-grid">' + FXC.map(function (x) { return '<button class="fx-card ' + (fxo[x[0]] ? 'on' : '') + '" data-action="fx-tog" data-k="' + x[0] + '"><svg viewBox="0 0 24 24" class="svg">' + x[2] + '</svg><span>' + x[1] + '</span><i class="fx-sw"></i></button>'; }).join('') + '</div>');
+      if (fxo.waves) {
+        var wc = L.waveCol || '#9a7bff';
+        h += lrow('Цвет волн', '<div class="wheel-r"><label class="wheel" title="Выбрать любой цвет"><input type="color" data-look="waveCol" value="' + wc + '"><span style="--c:' + wc + '"></span></label><div class="skins">' + SKINS.map(function (s) {
+          return '<button class="skin ' + (!L.waveCol && st.skin === s[0] ? 'on' : '') + '" data-action="set-skin" data-s="' + s[0] + '"><i style="background:' + s[2] + '"></i>' + s[1] + '</button>'; }).join('') + '</div>' + (L.waveCol ? '<button class="btn-soft sm" data-action="look-set" data-k="waveCol" data-v="">Сбросить</button>' : '') + '</div>');
+      }
       var bgTail = true;
-      if ((st.fx || 'waves') === 'waves') h += lrow('Скин (цвет волн)', '<div class="skins">' + SKINS.map(function (s) {
-        return '<button class="skin ' + (st.skin === s[0] ? 'on' : '') + '" data-action="set-skin" data-s="' + s[0] + '"><i style="background:' + s[2] + '"></i>' + s[1] + '</button>'; }).join('') + '</div>');
     }
     if (tab === 'bg') h += '</div></div>';
     else if (tab !== 'notes' && tab !== 'greet') h = '<div class="sty-sec"><div class="sty-box">' + h + '</div></div>';
@@ -2208,12 +2299,16 @@
       '<div class="sty"><nav class="sty-nav">' + STY_TABS.map(function (t) { return '<button class="sty-tab ' + (t[0] === tab ? 'on' : '') + '" data-action="sty-tab" data-t="' + t[0] + '"><svg class="tb-ic" viewBox="0 0 24 24">' + TB_IC[t[1]] + '</svg>' + t[2] + '</button>'; }).join('') +
       '</nav><div class="sty-body">' + stylePane(tab) + '</div></div>';
   }
+  function langName() { var cur = S.settings.lang || 'ru', l = (window.LO_LANG ? window.LO_LANG.list : [['ru', 'Русский']]).filter(function (x) { return x[0] === cur; })[0]; return l ? l[1] : 'Русский'; }
+  function langModal() {
+    var cur = S.settings.lang || 'ru';
+    openModal('<h3>Язык</h3><input id="lang-q" class="lang-q" placeholder="Поиск" autocomplete="off"><div class="lang-list" id="lang-grid">' + (window.LO_LANG ? window.LO_LANG.list : []).map(function (l) {
+      return '<button class="lang-b ' + (cur === l[0] ? 'on' : '') + '" data-action="set-lang" data-s="' + l[0] + '"><b>' + l[1] + '</b><small>' + (l[2] || '') + '</small><i class="lang-ck">' + (cur === l[0] ? '✓' : '') + '</i></button>'; }).join('') + '</div>');
+  }
   function viewSettings() {
     return settingsAll() + '<div class="set-grid">' +
       '<section class="glass set wide2"><div class="set-row"><div><h3>Стили</h3></div><button class="btn-primary" data-action="styles-open">Открыть стили</button></div></section>' +
-      '<section class="glass set wide2 lang-sec"><div class="set-row"><div><h3>Язык / Language</h3><p class="muted">' + esc(((window.LO_LANG && window.LO_LANG.list.filter(function (l) { return l[0] === (S.settings.lang || 'ru'); })[0]) || ['ru', 'Русский'])[1]) + '</p></div><input id="lang-q" class="lang-q" placeholder="Поиск языка" autocomplete="off"></div><div class="lang-grid" id="lang-grid">' +
-      (window.LO_LANG ? window.LO_LANG.list : [['ru', 'Русский'], ['en', 'English']]).map(function (l) { return '<button class="lang-b ' + ((S.settings.lang || 'ru') === l[0] ? 'on' : '') + '" data-action="set-lang" data-s="' + l[0] + '"><b>' + l[1] + '</b><small>' + (l[2] || '') + '</small></button>'; }).join('') + '</div></section>' +
-      '<section class="glass set"><div class="set-row"><div><h3>Этап серии в Ежедневнике</h3></div><button class="switch ' + (!S.settings.hideWeek ? 'on' : '') + '" data-action="set-hideweek"><i></i></button></div></section>' +
+      '<section class="glass set"><button class="set-row lang-row" data-action="lang-open"><div><h3>Язык</h3></div><span class="lang-cur">' + esc(langName()) + '<i>›</i></span></button></section>' +
       '<section class="glass set"><div class="set-row"><div><h3>Уведомления</h3></div>' +
       '<button class="switch ' + (S.settings.notifications ? 'on' : '') + '" data-action="set-notif"><i></i></button></div></section>' +
       '<section class="glass set wide2"><div class="set-row"><div><h3>Синхронизация ПК ⇄ телефон</h3><p class="muted" id="cloud-state">' + esc(cloudLabel(true)) + '</p></div><div class="set-btns"><button class="btn-soft" data-action="cloud-cfg">Сервер</button>' + (cloudOn() ? '<button class="btn-primary" data-action="cloud-now">Синхронизировать</button>' : '') + '</div></div></section>' +
@@ -2287,6 +2382,7 @@
       else if (pic) im.removeChild(pic);
       im.style.opacity = L.bgImage ? String((L.bgOpacity == null ? 60 : L.bgOpacity) / 100) : '0';
     }
+    applyFx();
   }
 
   /* ---------- отрисовка ---------- */
@@ -2438,18 +2534,26 @@
     }
     return (fxCache[key] = 'url(' + c.toDataURL('image/png') + ')');
   }
+  function fxOf() {
+    var st = (S && S.settings) || {}, f = st.fxs;
+    if (!f) { var o = st.fx || 'waves'; f = { waves: o === 'waves', rain: o === 'rain', snow: o === 'snow', storm: false }; }
+    return f;
+  }
   function applyFx() {
-    var fx = (S && S.settings.fx) || 'waves';
-    if (S && fx === 'rain') flag('rain'); if (S && fx === 'snow') flag('snow');
-    document.body.setAttribute('data-fx', fx);
-    var box = $('#fxl'); if (!box) return;
-    var rain = fx === 'rain', snowOn = fx === 'snow', light = document.body.getAttribute('data-bg') === 'light-matte';
-    if (!rain && !snowOn) { box.removeAttribute('data-k'); return; }
-    var key = fx + (light ? 'L' : 'D'); if (box.getAttribute('data-k') === key) return;
-    box.setAttribute('data-k', key);
-    var f1 = box.querySelector('.f1'), f2 = box.querySelector('.f2');
-    if (rain) { f1.style.backgroundImage = fxTile('rain', 512, 26, light, 7); f2.style.backgroundImage = fxTile('rain', 384, 14, light, 11); }
-    else { f1.style.backgroundImage = fxTile('snow', 512, 36, light, 5); f2.style.backgroundImage = fxTile('snow', 400, 20, light, 9); }
+    var f = fxOf(), b = document.body, light = b.getAttribute('data-bg') === 'light-matte';
+    if (S) { if (f.rain) flag('rain'); if (f.snow) flag('snow'); }
+    b.setAttribute('data-fw', f.waves ? '1' : ''); b.setAttribute('data-fr', f.rain ? '1' : ''); b.setAttribute('data-fsn', f.snow ? '1' : ''); b.setAttribute('data-ft', f.storm ? '1' : '');
+    function tiles(id, kind, a, n1, n2, s1, s2, on) {
+      var box = $(id); if (!box) return; var key = kind + (light ? 'L' : 'D');
+      if (!on || box.getAttribute('data-k') === key) return;
+      box.setAttribute('data-k', key);
+      var f1 = box.querySelector('.f1'), f2 = box.querySelector('.f2');
+      f1.style.backgroundImage = fxTile(kind, a[0], n1, light, s1); f2.style.backgroundImage = fxTile(kind, a[1], n2, light, s2);
+    }
+    tiles('#fx-r', 'rain', [512, 384], 26, 14, 7, 11, f.rain);
+    tiles('#fx-s', 'snow', [512, 400], 36, 20, 5, 9, f.snow);
+    var w = S && S.settings.look && S.settings.look.waveCol, st = document.body.style;
+    if (w) { st.setProperty('--wave1', w); st.setProperty('--wave2', hueShift(w, 40)); } else { st.removeProperty('--wave1'); st.removeProperty('--wave2'); }
   }
   function talkSync() {
     var want = false;
@@ -2479,9 +2583,9 @@
     var N = UI.n3 || (UI.n3 = Object.assign({ fav: false, pin: false, draw: false, color: DRAW_COLS[0], size: 6, drawn: false, brush: 'pencil', paper: 'dark', half: false, drawData: '', textDraft: '' }, S.draft || {}));
     return '<div class="notes3"><div class="n3-main"><div class="glass composer3' + (UI.n3full ? ' full' : '') + '"><div class="n3-fh"><button class="btn-soft sm" data-action="n3-full-off">← Свернуть</button><b>Новая заметка</b><button class="btn-primary sm" data-action="n3-save">Сохранить</button></div><textarea id="n3-text" rows="3" maxlength="20000" placeholder="О чём ты думаешь? Любой текст, мысль, цитата…">' + esc(N.textDraft || '') + '</textarea>' +
       (N.drawData ? '<div class="n3-prev"><img src="' + N.drawData + '" alt=""><div><button class="btn-soft sm" data-action="dr-open">Изменить рисунок</button><button class="btn-soft sm" data-action="dr-remove">Убрать</button></div></div>' : '') +
-      '<div class="n3-foot"><button class="chip-t" data-action="n3-full-on">⤢ На весь экран</button><button class="chip-t ' + (N.drawData ? 'on' : '') + '" data-action="dr-open">✎ Рисунок</button><button class="chip-t ' + (N.fav ? 'on' : '') + '" data-action="n3-fav">♥ В избранное</button><button class="chip-t ' + (N.pin ? 'on' : '') + '" data-action="n3-pin-new">📌 Закрепить</button>' +
+      '<div class="n3-foot"><button class="n3-act" data-action="n3-full-on">' + ic('full') + '<span>На весь экран</span></button><button class="n3-act ' + (N.drawData ? 'on' : '') + '" data-action="dr-open">' + ic('brush') + '<span>Рисунок</span></button><button class="n3-act ' + (N.fav ? 'on' : '') + '" data-action="n3-fav">' + ic('heart') + '<span>В избранное</span></button><button class="n3-act ' + (N.pin ? 'on' : '') + '" data-action="n3-pin-new">' + ic('pin') + '<span>Закрепить</span></button>' +
       '<button class="btn-primary" data-action="n3-save">Сохранить заметку</button></div></div>' +
-      '<div class="n3-bar"><div class="tabs sm">' + tabs + '</div><div class="tabs sm"><button class="tab sm" data-action="n3-all" data-o="0">▴ Свернуть все</button><button class="tab sm" data-action="n3-all" data-o="1">▾ Развернуть все</button></div></div><div class="n3-feed">' + feed + '</div></div>' +
+      '<div class="n3-bar"><div class="tabs sm">' + tabs + '</div><div class="tabs sm"><button class="tab sm ic" data-action="n3-all" data-o="0">' + ic('fold') + '<span>Свернуть все</span></button><button class="tab sm ic" data-action="n3-all" data-o="1">' + ic('unfold') + '<span>Развернуть все</span></button></div></div><div class="n3-feed">' + feed + '</div></div>' +
       '<aside class="n3-side">' + '<div class="glass n3-stats"><div><b>' + S.notes.length + '</b><small>' + plural(S.notes.length, ['заметка', 'заметки', 'заметок']) + '</small></div><div><b>' + cnt.pin + '</b><small>закреплено</small></div><div><b>' + cnt.fav + '</b><small>в избранном</small></div></div></aside></div>';
   }
   /* полноэкранный редактор заметки */
@@ -2701,6 +2805,20 @@
       taskModal();
     },
     'int-hab': function (el) { var h = byId(S.habits, el.getAttribute('data-hid')); if (!h) return; H['hab-toggle']({ getAttribute: function (a) { return a === 'data-id' ? h.id : today(); } }); },
+    'int-did': function (el) { UI.idid = { tid: el.getAttribute('data-tid'), pid: el.getAttribute('data-pid'), mode: 'act', par: '', text: '' }; didModal(); },
+    'id-mode': function (el) { var I = UI.idid; I.text = ($('#id-t') || {}).value || ''; I.mode = el.getAttribute('data-m'); didModal(); },
+    'id-ok': function () {
+      var I = UI.idid, k = byId(S.tasks, I.tid), p = byId(S.projects, I.pid); if (!k || !p) return;
+      var tx = (($('#id-t') || {}).value || '').trim(); if (!tx) { toast('Напиши, что ты сделал'); return; }
+      var before = dayStats(today()).total, node = { id: uid(), cat: Date.now() - QUICK_SEC * 2000, text: tx, icon: '', done: true, doneDate: k.date, subs: [], from: k.id, day: k.date };
+      if (I.mode === 'sub') {
+        var pid = ($('#id-p') || {}).value, f = pid && bmFind(p.actions, pid);
+        if (!f) { toast('Выбери действие, в которое входит поддействие'); return; }
+        f.n.subs = f.n.subs || []; f.n.subs.push(node); bmRecalc(p, node.id);
+      } else p.actions.push(node);
+      syncProjStatus(p); closeModal(); save(); var after = dayStats(today()).total; softRender();
+      if (after > before) gainToast('Записано в проект', after - before);
+    },
     'int-add': function (el) {
       var k = byId(S.tasks, el.getAttribute('data-tid')), p = byId(S.projects, el.getAttribute('data-pid')); if (!k || !p) return;
       formModal({ title: 'Действие в проекте «' + p.name + '»', values: {}, fields: [{ key: 'text', label: 'Что сделать сегодня', type: 'text', required: true }],
@@ -2751,6 +2869,21 @@
     'week-open': function () { weekModal(); },
     'ach-br': function (el) { var b = el.getAttribute('data-b'); UI.achBr = UI.achBr || {}; UI.achBr[b] = !UI.achBr[b]; render(); },
     'hall-add': function () { hallModal(); },
+    'rep-open': function (el) { var id = el.getAttribute('data-id'); UI.repOpen = UI.repOpen === id ? null : id; var li = el.closest('li'); if (li) { $$('.rep-li.open').forEach(function (x) { if (x !== li) x.classList.remove('open'); }); li.classList.toggle('open', UI.repOpen === id); } },
+    'hall-hab': function () { UI.hh = { hid: '', icon: '🏆', why: '' }; hallHabModal(); },
+    'hh-pick': function (el) { UI.hh.why = ($('#hh-why') || {}).value || ''; UI.hh.hid = el.getAttribute('data-id'); hallHabModal(); },
+    'hh-ic': function (el) { UI.hh.why = ($('#hh-why') || {}).value || ''; UI.hh.icon = el.getAttribute('data-e'); hallHabModal(); },
+    'hh-save': function () {
+      var I = UI.hh, hb = byId(S.habits, I.hid); if (!hb) { toast('Выбери привычку'); return; }
+      S.hall.push({ id: uid(), kind: 'hab', hid: hb.id, name: hb.name, icon: I.icon, why: (($('#hh-why') || {}).value || '').trim(), names: [hb.name], from: today(), to: '', days: 0, at: Date.now(), date: today() });
+      closeModal(); save(); render(); toast('Привычка на доске почёта', true);
+    },
+    'hall-win': function (el) {
+      var h = byId(S.hall, el.getAttribute('data-id')); if (!h) return;
+      confirmBox('Отметить победу над привычкой «' + h.name + '»? Счётчик остановится на ' + hallDays(h) + ' ' + plural(hallDays(h), ['день', 'дня', 'дней']) + '.', function () { h.days = hallDays(h); h.won = true; h.to = today(); h.at = Date.now(); save(); render(); toast('Победа записана на доску!', true); }, 'Победа');
+    },
+    'hall-ic': function (el) { UI.hall.icon = el.getAttribute('data-e'); $$('#modal .ic-b').forEach(function (b) { b.classList.toggle('on', b === el && UI.hall.icon === b.getAttribute('data-e')); }); },
+    'hall-ice': function (el) { var I = UI.hall.edit; I.icon = el.getAttribute('data-e'); $$('#modal .ic-b').forEach(function (b) { b.classList.toggle('on', b.getAttribute('data-e') === I.icon); }); },
     'hall-tab': function (el) { UI.hall.tab = el.getAttribute('data-s'); $$('#modal .seg-b').forEach(function (b) { b.classList.toggle('on', b.getAttribute('data-s') === UI.hall.tab); }); hallPaint(); },
     'hall-pick': function (el) { var k = el.getAttribute('data-key'); if (UI.hall.sel[k]) delete UI.hall.sel[k]; else UI.hall.sel[k] = 1; hallPaint(); },
     'hall-open': function (el) { var id = el.getAttribute('data-id'); UI.hallOpen[id] = !UI.hallOpen[id]; render(); },
@@ -2759,7 +2892,7 @@
       var picked = H0.list.filter(function (o) { return H0.sel[o.key]; }), days = {}, from = '', to = '';
       picked.forEach(function (o) { Object.keys(o.days).forEach(function (d) { days[d] = 1; }); if (!from || o.first < from) from = o.first; if (!to || o.last > to) to = o.last; });
       var title = ($('#hall-title').value || '').trim() || picked.map(function (o) { return o.name; }).join(' + ');
-      var e = { id: uid(), name: title.slice(0, 80), why: ($('#hall-why').value || '').trim(), names: picked.map(function (o) { return o.name; }), keys: keys, days: Object.keys(days).length, from: from, to: to, at: Date.now(), date: today() };
+      var e = { id: uid(), icon: H0.icon || '', name: title.slice(0, 80), why: ($('#hall-why').value || '').trim(), names: picked.map(function (o) { return o.name; }), keys: keys, days: Object.keys(days).length, from: from, to: to, at: Date.now(), date: today() };
       S.hall.push(e);
       keys.forEach(function (k) { S.hallClosed[k] = e.id; });
       if (keys.some(function (k) { return k.indexOf('s:') === 0; })) {
@@ -2773,9 +2906,10 @@
     },
     'hall-edit': function (el) {
       var h = byId(S.hall, el.getAttribute('data-id')); if (!h) return;
-      formModal({ title: 'Изменить достижение', values: { name: h.name, why: h.why || '' }, fields: [{ key: 'name', label: 'Название', type: 'text', required: true, max: 80 }, { key: 'why', label: 'Ради чего это было', type: 'textarea' }],
-        onSubmit: function (v) { h.name = v.name; h.why = v.why || ''; save(); render(); } });
+      UI.hall = UI.hall || {}; UI.hall.edit = { id: h.id, icon: h.icon || '' };
+      openModal('<h3>Изменить достижение</h3><div class="fld"><span>Иконка</span>' + icRow(h.icon || '', 'hall-ice') + '</div><div class="fld"><span>Название</span><input id="he-n" maxlength="80" value="' + esc(h.name) + '"></div><div class="fld"><span>Ради чего это было</span><textarea id="he-w" rows="3" maxlength="400">' + esc(h.why || '') + '</textarea></div><div class="did-ft"><button class="btn-soft" data-action="modal-close">Отмена</button><button class="btn-primary" data-action="he-save">Сохранить</button></div>');
     },
+    'he-save': function () { var I = UI.hall.edit, h = byId(S.hall, I.id); if (!h) return; var n = ($('#he-n').value || '').trim(); if (!n) return; h.name = n; h.why = ($('#he-w').value || '').trim(); h.icon = I.icon; closeModal(); save(); render(); },
     'hall-del': function (el) {
       var h = byId(S.hall, el.getAttribute('data-id')); if (!h) return;
       confirmBox('Убрать «' + h.name + '» с доски? Закрытые действия останутся закрытыми.', function () { S.hall = S.hall.filter(function (x) { return x.id !== h.id; }); save(); render(); }, 'Убрать');
@@ -3078,10 +3212,11 @@
     'set-qfont': function (el) { S.settings.qfont = el.getAttribute('data-s'); applySettings(); save(); render(); },
     'set-gfx': function (el) { S.settings.gfx = el.getAttribute('data-s'); applySettings(); save(); render(); },
     'set-bgpreset': function (el) { S.settings.bgPreset = el.getAttribute('data-s'); flag('style'); applySettings(); save(); render(); },
-    'set-hideweek': function () { S.settings.hideWeek = !S.settings.hideWeek; save(); render(); },
-    'set-lang': function (el) { S.settings.lang = el.getAttribute('data-s'); flag('lang'); applySettings(); save(); render(); },
+    'set-hideweek': function () { var L = S.settings.layout; if (L.custom) { L.hidden = L.hidden || []; if (L.hidden.indexOf('week') < 0) L.hidden.push('week'); } else S.settings.hideWeek = !S.settings.hideWeek; save(); render(); },
+    'lang-open': function () { langModal(); },
+    'set-lang': function (el) { S.settings.lang = el.getAttribute('data-s'); flag('lang'); closeModal(); applySettings(); save(); render(); },
     'look-tgrad': function () { S.settings.look.textGrad = !S.settings.look.textGrad; applyLook(); save(); render(); },
-    'set-skin': function (el) { S.settings.skin = el.getAttribute('data-s'); applySettings(); save(); render(); },
+    'set-skin': function (el) { S.settings.skin = el.getAttribute('data-s'); S.settings.look.waveCol = ''; applySettings(); save(); render(); },
     'help-card': function (el) { var c = el.closest('.hw-c'); if (c) c.classList.toggle('open'); },
     'uiscale-reset': function () { S.settings.uiScale = 100; applySettings(); save(); stylesRefresh(); },
     'set-size': function (el) { S.settings.size = el.getAttribute('data-s'); applySettings(); save(); render(); },
@@ -3112,7 +3247,44 @@
       S.settings[k0] = v0; if (['flame', 'flameCol', 'flameFx', 'doneCol', 'pad', 'nstyle', 'nfont', 'greet'].indexOf(k0) >= 0) flag('style'); if (k0 === 'flame') flag('shapes', v0); if (k0 === 'pad') flag('pads', v0);
       applySettings(); save(); render();
     },
-    'lay-edit': function () { flag('layout'); var L = S.settings.layout; L.custom = true; L.items = layItems(); UI.layEdit = true; save(); render(); var vw = $('#view'); if (vw) vw.scrollTop = 0; },
+    'lay-edit': function () { flag('layout'); var L = S.settings.layout; L.custom = true; L.hidden = L.hidden || []; if (!L.v34) { L.v34 = 1; ['int', 'choice'].forEach(function (h) { if (L.hidden.indexOf(h) < 0) L.hidden.push(h); }); } L.items = layItems(); UI.layEdit = true; save(); render(); var vw = $('#view'); if (vw) vw.scrollTop = 0; },
+    'lay-btns': function () { layBtns(); },
+    'lay-tog': function (el) {
+      var L = S.settings.layout, b = el.getAttribute('data-b'); L.hidden = L.hidden || [];
+      if (L.hidden.indexOf(b) < 0) L.hidden.push(b); else { if (b === 'week') S.settings.hideWeek = false; H['lay-show'](el); }
+      save(); render(); layBtns();
+    },
+    'int-quick': function () {
+      var hs = S.habits.filter(function (h) { return !h.sys; }), ps = S.projects;
+      openModal('<h3>Взаимодействие</h3><div class="muted">Привычка или проект станут действием на сегодня.</div><div class="iq-list">' +
+        hs.map(function (h) { return '<button class="iq-b" data-action="int-quick-pick" data-k="hab" data-id="' + h.id + '"><span class="iq-i">' + (h.type === 'bad' ? WARN_SVG : ic('tick')) + '</span><b>' + esc(h.name) + '</b><small>' + (h.type === 'bad' ? 'вредная привычка' : 'полезная привычка') + '</small></button>'; }).join('') +
+        ps.map(function (p) { return '<button class="iq-b" data-action="int-quick-pick" data-k="proj" data-id="' + p.id + '"><span class="iq-i">' + intIc('proj') + '</span><b>' + esc(p.name) + '</b><small>проект</small></button>'; }).join('') +
+        (hs.length + ps.length ? '' : '<div class="empty">Пока нет привычек и проектов</div>') + '</div>');
+    },
+    'int-quick-pick': function (el) {
+      var k = el.getAttribute('data-k'), id = el.getAttribute('data-id'), o = k === 'hab' ? byId(S.habits, id) : byId(S.projects, id); if (!o) return;
+      S.tasks.push({ id: uid(), text: o.name, icon: k === 'hab' ? (o.type === 'bad' ? '🛡️' : '🔁') : '📁', done: false, date: today(), cat: Date.now(), ints: [k === 'hab' ? { k: 'hab', hid: id } : { k: 'proj', pid: id }] });
+      closeModal(); save(); render();
+    },
+    'ch-add': function () {
+      openModal('<h3>Новый выбор</h3><label class="did-l">Вопрос</label><input id="ch-t" class="did-in" maxlength="80" value="Что сделать сегодня?" autocomplete="off"><label class="did-l">Варианты (выберешь один за день)</label>' +
+        [0, 1, 2, 3].map(function (i) { return '<div class="ch-opt"><input class="did-in ch-o" maxlength="80" placeholder="' + (i < 2 ? 'Вариант ' + (i + 1) : 'Ещё вариант (необязательно)') + '"><input class="did-in ch-m" maxlength="14" placeholder="время"></div>'; }).join('') +
+        '<label class="ch-daily"><input type="checkbox" id="ch-d"> спрашивать каждый день</label><div class="did-ft"><button class="btn-soft" data-action="modal-close">Отмена</button><button class="btn-primary" data-action="ch-save">Добавить</button></div>');
+    },
+    'ch-save': function () {
+      var opts = []; $$('#modal .ch-opt').forEach(function (r) { var t = r.querySelector('.ch-o').value.trim(); if (t) opts.push({ text: t, tm: r.querySelector('.ch-m').value.trim() }); });
+      if (opts.length < 2) { toast('Нужно минимум два варианта'); return; }
+      S.choices = S.choices || []; S.choices.push({ id: uid(), title: ($('#ch-t').value || '').trim() || 'Что сделать сегодня?', opts: opts, daily: $('#ch-d').checked, date: today() });
+      closeModal(); save(); render();
+    },
+    'ch-pick': function (el) {
+      var c = byId(S.choices || [], el.getAttribute('data-id')), i = +el.getAttribute('data-i'); if (!c || !c.opts[i]) return;
+      var o = c.opts[i]; S.choiceDay = S.choiceDay || {}; if (S.choiceDay[c.id] && S.choiceDay[c.id].date === today()) return;
+      S.choiceDay[c.id] = { date: today(), idx: i };
+      S.tasks.push({ id: uid(), text: o.text, icon: '🔀', done: false, date: today(), cat: Date.now(), note: (o.tm ? 'Время: ' + o.tm + ' · ' : '') + 'выбрано из «' + c.title + '»' });
+      save(); render();
+    },
+    'ch-del': function (el) { var id = el.getAttribute('data-id'); S.choices = (S.choices || []).filter(function (c) { return c.id !== id; }); save(); render(); },
     'lay-done': function () { UI.layEdit = false; render(); },
     'lay-reset': function () { S.settings.layout = { custom: false, items: {}, hidden: [] }; UI.layEdit = false; save(); render(); },
     'lay-hide': function (el) { var L = S.settings.layout, b = el.getAttribute('data-b'); if (L.hidden.indexOf(b) < 0) L.hidden.push(b); save(); render(); },
@@ -3190,7 +3362,7 @@
     'talk-toggle': function () { UI.talkPaused = !UI.talkPaused; talkSync(); talkPaint(); },
     'styles-open': function () { stylesModal(); },
     'sty-tab': function (el) { var nt = el.getAttribute('data-t'); if (nt === UI.stylesTab) return; UI.stylesTab = nt; stylesRefresh(); var sb = $('#modal .sty-body'); if (sb) { var sc0 = sb.querySelectorAll('.sty-sec'); enterAnim(sb, { flat: true, dy: 10, dur: 380, gap: 35 }); if (sc0.length) { /* секции едут по очереди */ } } },
-    'set-fx': function (el) { S.settings.fx = el.getAttribute('data-s'); applyFx(); save(); render(); },
+    'fx-tog': function (el) { var f = Object.assign({}, fxOf()), k = el.getAttribute('data-k'); f[k] = !f[k]; S.settings.fxs = f; applyFx(); save(); stylesRefresh(); },
     'prof-toggle': function () { UI.profOpen = !UI.profOpen; if (UI.profOpen) { closePop(); closeHelp(); renderProf(); } else closeProf(); },
     'help-toggle': function () { UI.helpOpen = true; closePop(); closeProf(); renderHelp(); },
     'prof-view': function () { closeProf(); go('profile'); },
@@ -3615,6 +3787,7 @@
     var t = e.target, k = t && t.getAttribute && t.getAttribute('data-look');
     if (!k || !S) return;
     S.settings.look[k] = t.type === 'range' ? +t.value : t.value;
+    if (k === 'waveCol' && t.nextElementSibling) t.nextElementSibling.style.setProperty('--c', t.value);
     applyLook(); save();
     if (t.type === 'range') { var rv = t.parentNode.querySelector('.rv'); if (rv) rv.textContent = t.value + '%'; }
     else { var row = t.closest('.sw-row'); if (row) $$('.sw.on', row).forEach(function (b) { b.classList.remove('on'); }); }
