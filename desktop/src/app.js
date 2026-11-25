@@ -1202,14 +1202,20 @@
       (arch ? '' : '<span class="hb-acts"><button class="hb-btn ok' + (st === 'ok' ? ' on' : '') + '" data-action="hab-set" data-id="' + h.id + '" data-v="ok">' + tx[0] + '</button><button class="hb-btn no' + (st === 'fail' ? ' on' : '') + '" data-action="hab-set" data-id="' + h.id + '" data-v="fail">' + tx[1] + '</button></span>');
   }
   /* связи выглядят как обычные поддействия: те же строки, та же линия слева */
+  function idRead() { var I = UI.idid; if (!I) return; var t = $('#id-t'); if (t) I.text = t.value; var r = $$('#modal .id-s'); if (r.length) I.subs = r.map(function (e) { return e.value; }); }
   function didModal() {
     var I = UI.idid, p = byId(S.projects, I.pid); if (!p) return;
-    var opts = []; (function w(l, d) { l.forEach(function (n) { opts.push('<option value="' + n.id + '"' + (I.par === n.id ? ' selected' : '') + '>' + '— '.repeat(d) + esc(n.text) + '</option>'); w(n.subs || [], d + 1); }); })(p.actions, 0);
-    openModal('<h3>В проекте «' + esc(p.name) + '» я сделал…</h3><div class="seg did-seg">' + [['act', 'Действие'], ['sub', 'Поддействие']].map(function (x) { return '<button class="seg-b ' + (I.mode === x[0] ? 'on' : '') + '" data-action="id-mode" data-m="' + x[0] + '">' + x[1] + '</button>'; }).join('') + '</div>' +
-      '<label class="did-l">' + (I.mode === 'act' ? 'Заголовок действия' : 'Что именно сделано') + '</label><input id="id-t" class="did-in" maxlength="140" placeholder="Я сделал…" value="' + esc(I.text) + '" autocomplete="off">' +
-      (I.mode === 'sub' ? '<label class="did-l">В каком действии</label>' + (opts.length ? '<select id="id-p" class="did-in">' + opts.join('') + '</select>' : '<div class="muted">В проекте пока нет действий — сначала запиши действие.</div>') : '') +
-      '<div class="did-ft"><button class="btn-soft" data-action="modal-close">Отмена</button><button class="btn-primary" data-action="id-ok">Записать</button></div>');
-    setTimeout(function () { var e = $('#id-t'); if (e) e.focus(); }, 60);
+    I.subs = I.subs && I.subs.length ? I.subs : ['']; var isA = I.mode === 'act', pars = [];
+    (function w(l, d) { l.forEach(function (n) { pars.push('<button type="button" class="did-par' + (I.par === n.id ? ' on' : '') + '" style="--d:' + d + '" data-action="id-par" data-id="' + n.id + '"><i></i><span>' + esc(n.text) + '</span></button>'); w(n.subs || [], d + 1); }); })(p.actions, 0);
+    var rows = I.subs.map(function (v, i) { return '<div class="did-r"><em>' + (i + 1) + '</em><input class="did-in id-s" maxlength="140" placeholder="' + (isA ? 'Я сделал поддействие…' : 'Что именно я сделал…') + '" value="' + esc(v) + '" autocomplete="off">' + (I.subs.length > 1 ? '<button type="button" class="ico-btn sm" data-action="id-rm" data-i="' + i + '">' + ic('close') + '</button>' : '') + '</div>'; }).join('');
+    openModal('<div class="did"><div class="did-h"><span class="did-ic">' + intIc('proj') + '</span><div><small>Проект</small><h3>В проекте «' + esc(p.name) + '» я сделал…</h3></div></div>' +
+      '<div class="did-tabs">' + [['act', 'Действие'], ['sub', 'Поддействие']].map(function (x) { return '<button type="button" class="did-tab' + (I.mode === x[0] ? ' on' : '') + '" data-action="id-mode" data-m="' + x[0] + '">' + x[1] + '</button>'; }).join('') + '</div>' +
+      (isA ? '<label class="did-l">Действие</label><input id="id-t" class="did-in" maxlength="140" placeholder="Я сделал действие…" value="' + esc(I.text) + '" autocomplete="off">' +
+        '<label class="did-l">В этом действии я сделал поддействия <span>необязательно</span></label><div class="did-rows">' + rows + '</div><button type="button" class="did-more" data-action="id-more"><b>⋯</b> Ещё поддействие</button>'
+        : '<label class="did-l">В каком действии</label>' + (pars.length ? '<div class="did-pars">' + pars.join('') + '</div>' : '<div class="muted">В проекте пока нет действий — сначала запиши действие.</div>') +
+        '<label class="did-l">Что именно сделано</label><div class="did-rows">' + rows + '</div><button type="button" class="did-more" data-action="id-more"><b>⋯</b> Ещё поддействие</button>') +
+      '<div class="did-ft"><button class="btn-soft" data-action="modal-close">Отмена</button><button class="btn-primary" data-action="id-ok">Готово</button></div></div>', true);
+    setTimeout(function () { var e = $(isA ? '#id-t' : '#modal .id-s'); if (e && !e.value) e.focus(); }, 60);
   }
   function intsHtml(k, arch) {
     if (!k.ints || !k.ints.length) return '';
@@ -1222,7 +1228,7 @@
       var p = byId(S.projects, it.pid); if (!p) return '';
       var nodes = intNodes(k, p), dn = nodes.filter(function (x) { return x.n.done; }).length, okc = dn >= INT_MIN;
       var isInt = function (q) { return q && q.from === k.id && q.day === k.date; };
-      return '<div class="sub int-h-row int-proj"><span class="int-dot">' + intIc('proj') + '</span><span class="txt"><b>' + esc(p.name) + '</b><em class="t-link">проект</em><em class="int-cnt' + (okc ? ' ok' : '') + '" title="Записей за день">' + dn + ' / ' + INT_MIN + '</em></span>' + (arch ? '' : '<button class="chip-t sm int-did" data-action="int-did" data-tid="' + k.id + '" data-pid="' + p.id + '">＋ Записать, что сделал</button>') + '</div>' +
+      return '<div class="sub int-h-row int-proj"><span class="int-dot">' + intIc('proj') + '</span><span class="txt"><b>' + esc(p.name) + '</b><em class="t-link">проект</em><em class="int-cnt' + (okc ? ' ok' : '') + '" title="Записей за день">' + dn + ' / ' + INT_MIN + '</em></span>' + (arch ? '' : '<button class="chip-t sm int-did" data-action="int-did" data-tid="' + k.id + '" data-pid="' + p.id + '">＋ Записать дело</button>') + '</div>' +
         nodes.filter(function (x) { return !isInt(x.par); }).map(function (x) { return intNodeHtml(k, p, x.n, 1, arch, x.par ? x.par.text : ''); }).join('');
     }).join('') + '</div>';
   }
@@ -1251,10 +1257,11 @@
     function tip(k) { var x = STEPS[k], d = x[0] - st; return x[1] + ' · ' + x[0] + ' ' + plural(x[0], ['день', 'дня', 'дней']) + ' подряд — ' + (d <= 0 ? 'пройдено ✓' : 'осталось ' + d + ' ' + plural(d, ['день', 'дня', 'дней'])); }
     var nodes = STEPS.map(function (s, k) { return '<button class="lad-n' + (st >= s[0] ? ' on' : '') + (k === i - 1 ? ' cur' : '') + (k < 2 ? ' tl' : k > 5 ? ' tr' : '') + '" style="left:' + ((k + 1) / STEPS.length * 100) + '%" data-tip="' + esc(tip(k)) + '" tabindex="0"></button>'; }).join('');
     var lbs = STEPS.map(function (s, k) { return '<span class="' + (st >= s[0] ? 'on' : '') + '" style="left:' + ((k + 1) / STEPS.length * 100) + '%">' + s[2] + '</span>'; }).join('');
-    var gtip = sb.mid == null ? 'Золотое время появится после 3 завершённых дней' : 'Золотое время ≈ ' + hhmm(sb.mid) + ': ' + sb.ok + ' из ' + sb.n + ' последних дней в одном окне';
+    var GOLD = 100, inG = st >= GOLD, gp = Math.min(100, Math.round(st / GOLD * 1000) / 10);
+    var gtip = inG ? 'Золотое время: ' + st + ' ' + plural(st, ['день', 'дня', 'дней']) + ' подряд. Ты полностью вшит в ритм.' : 'Золотое время начинается со 100 дней серии. Осталось ' + (GOLD - st) + ' ' + plural(GOLD - st, ['день', 'дня', 'дней']);
     return '<div class="lad"><div class="lad-top"><b>' + stageLabel(i) + '</b><span>' + (nx ? 'до «' + nx[1] + '»: ' + (nx[0] - st) + ' ' + plural(nx[0] - st, ['день', 'дня', 'дней']) : 'вершина пройдена') + '</span></div>' +
       '<div class="lad-tr"><i class="lad-fill" style="width:' + pos + '%"></i>' + nodes + '<span class="lad-dot" style="left:' + pos + '%" data-tip="' + esc('Ты здесь: ' + st + ' ' + plural(st, ['день', 'дня', 'дней']) + ' подряд') + '">' + FLAME('lad-fl') + '</span></div><div class="lad-lb"><span class="on" style="left:0">0</span>' + lbs + '</div>' +
-      '<div class="gt" data-tip="' + esc(gtip) + '"><div class="gt-h"><span class="gt-ic">⏱</span><b>Золотое время</b><span class="gt-v">' + (sb.mid == null ? '—' : '≈ ' + hhmm(sb.mid)) + '</span></div><div class="gt-24"><i style="left:' + (sb.mid == null ? 0 : Math.max(0, (sb.mid - 60) / 14.4)) + '%;width:' + (sb.mid == null ? 0 : 8.33) + '%"></i>' + [0, 6, 12, 18, 24].map(function (h) { return '<u style="left:' + (h / 24 * 100) + '%"></u>'; }).join('') + '</div><div class="gt-ax"><span>0</span><span>6</span><span>12</span><span>18</span><span>24</span></div></div></div>';
+      '<div class="gt2' + (inG ? ' on' : '') + '" data-tip="' + esc(gtip) + '"><div class="gt2-h"><span class="gt2-ic">✦</span><b>Золотое время</b><em>' + (inG ? 'активно' : st + ' / ' + GOLD) + '</em></div><div class="gt2-bar"><i style="width:' + (inG ? 100 : gp) + '%"></i><u></u></div><small>' + (inG ? '100+ дней подряд — ты в золотом времени' : 'открывается на 100-й день серии') + '</small></div></div>';
   }
   function weekModal() {
     var st = streakInfo().streak, cur = stageOf(st);
@@ -1494,7 +1501,7 @@
       if (f === 'got' && !done) return ''; if (f === 'open' && (done || !open || a.sec)) return '';
       var par = a.par && ACH_BY[a.par], cls = (done ? 'got' : open && !a.sec ? 'open' : 'lock') + (a.sec ? ' sec' : ''), vis = done || (open && !a.sec);
       var onP = shown.indexOf('a:' + a.id) >= 0;
-      var right = done ? '<button class="ico-btn sm ar-pin' + (onP ? ' on' : '') + '" data-action="show-toggle" data-k="a:' + a.id + '" title="' + (onP ? 'Убрать из профиля' : 'Добавить в профиль') + '">' + ic('pin') + '</button><em class="ar-st">' + fmtShort(S.ach[a.id]) + '</em>' : (open && !a.sec) ? '<div class="ar-pr"><div class="progress sm"><i style="width:' + pc + '%"></i></div><small>' + cur + ' / ' + a.tg + '</small></div>' : a.sec ? '<em class="ar-st">???</em>' : '<em class="ar-st">после «' + esc(par ? aName(par) : '') + '»</em>';
+      var right = done ? '<em class="ar-st">' + fmtShort(S.ach[a.id]) + '</em>' : (open && !a.sec) ? '<div class="ar-pr"><div class="progress sm"><i style="width:' + pc + '%"></i></div><small>' + cur + ' / ' + a.tg + '</small></div>' : a.sec ? '<em class="ar-st">???</em>' : '<em class="ar-st">после «' + esc(par ? aName(par) : '') + '»</em>';
       return '<div class="ach-r ' + cls + '"><span class="ar-ic">' + (vis ? a.ic : (a.sec ? '🔒' : '•')) + '</span><div class="ar-t"><b>' + (vis ? esc(aName(a)) : (a.sec ? 'Секретное достижение' : 'Скрыто')) + (a.sec && done ? '<i class="ar-tag">секрет</i>' : '') + '</b><p>' + (vis ? esc(aDesc(a)) : (a.sec ? 'Условие скрыто. Узнаешь, когда получишь' : 'Откроется после предыдущего достижения')) + '</p></div>' + right + '</div>';
     }
     function order(br, par) {
@@ -1605,16 +1612,16 @@
           (h.won ? '' : '<div class="progress sm"><i style="width:' + (nx ? Math.round((days - pv) / (nx - pv) * 100) : 100) + '%"></i></div><small>' + (nx ? 'до ' + nx + ' ' + plural(nx, ['дня', 'дней', 'дней']) + ': ' + (nx - days) : 'вершина') + '</small>') + '</div>';
         if (!h.won) foot = '<button class="chip-t sm win" data-action="hall-win" data-id="' + h.id + '">' + (bad ? 'Я победил привычку' : 'Привычка закреплена') + '</button>';
       }
-      return '<article class="hall-c ' + (open ? 'open' : '') + (h.kind === 'hab' ? ' hab' : '') + (h.won ? ' won' : '') + '"><div class="hc-medal">' + medal + '</div>' +
+      var when = h.from ? esc(fmtLong(h.from)) + (h.to && h.to !== h.from ? ' — ' + esc(fmtLong(h.to)) : '') : esc(fmtLong(h.date || today()));
+      return '<article class="hall-c ' + (open ? 'open' : '') + (h.kind === 'hab' ? ' hab' : '') + (h.won ? ' won' : '') + '"><div class="hc-plate"><div class="hc-medal">' + medal + '</div></div>' +
+        '<div class="hc-main"><h3>' + esc(h.name) + '</h3><div class="hc-dates">' + (h.kind === 'hab' ? (h.won ? 'Победа · ' : 'С ') : 'Выполнено · ') + when + '</div>' + stage + (h.why ? '<blockquote>' + esc(h.why) + '</blockquote>' : '') + '</div>' +
         '<div class="hc-days"><b>' + days + '</b><span>' + plural(days, ['день', 'дня', 'дней']) + (h.kind === 'hab' && !h.won ? (bad ? ' без срыва' : ' подряд') : '') + '</span></div>' +
-        '<h3>' + esc(h.name) + '</h3>' + stage + (h.why ? '<blockquote>' + esc(h.why) + '</blockquote>' : '') +
-        '<div class="hc-dates">' + (h.from ? esc(fmtLong(h.from)) + (h.to && h.to !== h.from ? ' — ' + esc(fmtLong(h.to)) : '') : '') + '</div>' +
         (open ? '<div class="hc-more"><small>' + (h.kind === 'hab' ? 'Привычка' : 'Закрытые действия') + '</small>' + (h.names || []).map(function (n) { return '<span>' + esc(n) + '</span>'; }).join('') + '<small>На доске с ' + esc(fmtLong(h.date || today())) + '</small></div>' : '') +
         '<div class="hc-foot"><button class="chip-t sm" data-action="hall-open" data-id="' + h.id + '">' + (open ? 'Свернуть' : 'Подробнее') + '</button>' + foot + '<span></span><button class="ico-btn sm ar-pin' + ((S.profile.show || []).indexOf('h:' + h.id) >= 0 ? ' on' : '') + '" data-action="show-toggle" data-k="h:' + h.id + '" title="В профиль">' + ic('pin') + '</button><button class="ico-btn sm" data-action="hall-edit" data-id="' + h.id + '" title="Изменить">' + ic('pencil') + '</button><button class="ico-btn sm" data-action="hall-del" data-id="' + h.id + '" title="Убрать с доски">' + ic('trash') + '</button></div></article>';
     }).join('');
-    return '<div class="page-head"><span class="page-ico">' + ic('medal') + '</span><div><h1 class="title">Доска почёта</h1></div><div class="hall-hb"><button class="ico-btn ord-b" data-action="ord-open" data-o="hall" title="Порядок">⇅</button><button class="btn-primary" data-action="hall-add">Добавить личное достижение</button></div></div>' +
+    return '<div class="page-head"><span class="page-ico">' + ic('medal') + '</span><div><h1 class="title">Доска почёта</h1></div><div class="hall-hb"><div class="hf-pick" title="Рамка карточек">' + [['crown', 'Корона'], ['laurel', 'Лавр'], ['royal', 'Рубин'], ['neon', 'Неон']].map(function (f) { return '<button class="hf-b hf-' + f[0] + ((S.settings.hallFrame || 'crown') === f[0] ? ' on' : '') + '" data-action="hall-frame" data-f="' + f[0] + '" title="' + f[1] + '"><i></i></button>'; }).join('') + '</div><button class="ico-btn ord-b" data-action="ord-open" data-o="hall" title="Порядок">⇅</button><button class="btn-primary" data-action="hall-add">Добавить личное достижение</button></div></div>' +
       '<section class="glass hall-top"><div><b>' + list.length + '</b><small>на доске</small></div><div><b>' + total + '</b><small>дней дисциплины</small></div></section>' +
-      (cards ? '<div class="hall-grid">' + cards + '</div>' : '<div class="glass hall-empty"><svg viewBox="0 0 24 24">' + SVG.medal + '</svg><b>Доска пока пуста</b></div>');
+      (cards ? '<div class="hall-grid" data-hf="' + (S.settings.hallFrame || 'crown') + '">' + cards + '</div>' : '<div class="glass hall-empty"><svg viewBox="0 0 24 24">' + SVG.medal + '</svg><b>Доска пока пуста</b></div>');
   }
   function choiceHtml() {
     var list = (S.choices || []).filter(function (c) { return !c.picked; }); UI.chOpen = UI.chOpen || {}; if (!list.length) return '';
@@ -1679,14 +1686,15 @@
     var chosen = [];
     ps.forEach(function (p) { if (Q.sel.proj[p.id]) chosen.push([p.name, intIc('proj'), 'proj', p.id]); });
     hs.forEach(function (h) { if (Q.sel.hab[h.id]) chosen.push([h.name, h.type === 'bad' ? WARN_SVG : ic('tick'), 'hab', h.id]); });
-    openModal('<div class="chm2 iqm"><div class="chm-title"><span class="chm-tic">⇄</span><b>' + (Q.tab === 'proj' ? 'Взаимодействие с проектами' : 'Взаимодействие с привычками') + '</b></div><div class="iq-plate"><div class="iq-tiles pills">' + tile('proj', 'Проекты', ps.length, ns, 'proj') + tile('hab', 'Привычки', hs.length, nh, 'hab') + '</div>' +
+    openModal('<div class="chm2 iqm"><div class="chm-title"><span class="chm-tic">⇄</span><b>' + (Q.edit ? 'Изменить: ' : '') + (Q.tab === 'proj' ? 'Взаимодействие с проектами' : 'Взаимодействие с привычками') + '</b></div><div class="iq-plate"><div class="iq-tiles pills">' + tile('proj', 'Проекты', ps.length, ns, 'proj') + tile('hab', 'Привычки', hs.length, nh, 'hab') + '</div>' +
       '<div class="iq-hint">' + (Q.tab === 'proj' ? 'Выберите текущие проекты для взаимодействия' : 'Выберите привычки для взаимодействия') + '</div><div class="iq-cols"><div class="iq-list2">' + (items.length ? items.map(function (r) {
         var on = !!Q.sel[Q.tab][r[0]];
         return '<button type="button" class="iq-r' + (on ? ' on' : '') + '" data-action="iq-tog" data-k="' + Q.tab + '" data-id="' + r[0] + '"><span class="iq-ic">' + r[3] + '</span><b>' + esc(r[1]) + '</b><small>' + r[2] + '</small><i class="iq-ck">' + (on ? ic('tick') : '') + '</i></button>';
       }).join('') : '<div class="empty sm">' + (Q.tab === 'proj' ? 'Проектов пока нет' : 'Привычек пока нет') + '</div>') + '</div>' +
       '<div class="iq-side"><small>Выбрано · ' + chosen.length + '</small>' + (chosen.length ? chosen.map(function (c) { return '<button type="button" class="iq-chip" data-action="iq-tog" data-k="' + c[2] + '" data-id="' + c[3] + '"><span>' + c[1] + '</span><b>' + esc(c[0]) + '</b><i>×</i></button>'; }).join('') : '<em>Пока ничего не выбрано</em>') + '</div></div></div>' +
-      '<label class="iq-nm"><span>Название взаимодействия</span><input id="iq-name" maxlength="80" value="' + esc(Q.name || '') + '" placeholder="Например: Рабочие проекты"></label>' +
-      '<div class="modal-actions"><button class="btn-soft" data-action="modal-close">Отмена</button><button class="btn-primary" data-action="iq-ok"' + (ns + nh ? '' : ' disabled') + '>Создать · ' + (ns + nh) + '</button></div></div>', true);
+      '<div class="iq-nm iq-nrow"><span>Название взаимодействия</span><div class="iq-nr"><button type="button" class="iq-emo-b" data-action="iq-emo-tog" title="Смайлик">' + (Q.icon || '🔗') + '</button><input id="iq-name" maxlength="80" value="' + esc(Q.name || '') + '" placeholder="Например: Рабочие проекты"></div></div>' +
+      (Q.emo ? '<div class="chc-emo iq-emo"><div class="emo-tabs">' + EMO_CATS.map(function (c, i) { return '<button type="button" class="emo-tab ' + (i === (Q.ecat || 0) ? 'on' : '') + '" data-action="iq-emo-tab" data-i="' + i + '" title="' + c[1] + '">' + c[0] + '</button>'; }).join('') + '</div><div class="emo-grid">' + EMO_CATS[Q.ecat || 0][2].map(function (e) { return '<button type="button" class="ico-pick ' + (Q.icon === e ? 'on' : '') + '" data-action="iq-emo" data-e="' + e + '">' + e + '</button>'; }).join('') + '</div></div>' : '') +
+      '<div class="modal-actions"><button class="btn-soft" data-action="modal-close">Отмена</button><button class="btn-primary" data-action="iq-ok"' + (ns + nh ? '' : ' disabled') + '>' + (Q.edit ? 'Сохранить' : 'Создать') + ' · ' + (ns + nh) + '</button></div></div>', true);
   }
   var ORD = {
     day: { key: 'dayOrder', def: ['plain', 'ints', 'choice'], names: { plain: 'Обычные действия', ints: 'Взаимодействия', choice: 'Выборочные' } },
@@ -1730,7 +1738,7 @@
         (k.ind && n ? '<i class="lvl ' + lvl + '" title="Сложность: ' + n + ' поддействий"></i>' : '') +
         (arch || k.link ? '' : '<button class="ico-btn" data-action="task-sub" data-id="' + k.id + '" title="Добавить поддействие">＋</button>') + ((n || nI) ? '<button class="sub-cnt" data-action="task-open" data-id="' + k.id + '">' + (n ? dn + '/' + n : '🔗 ' + nI) + ' <b class="' + (open ? 'up' : '') + '">▾</b></button>' : '') +
         (arch || k.link ? '' : '<button class="ico-btn ' + (k.tpl ? 'pinon' : '') + '" data-action="task-pin" data-id="' + k.id + '" title="Закрепить на каждый день">' + ic('pin') + '</button>') +
-        (nI || k.link ? '' : '<button class="ico-btn" data-action="task-edit" data-id="' + k.id + '" title="Редактировать">' + ic('pencil') + '</button>') +
+        (k.link ? '' : '<button class="ico-btn" data-action="' + (nI ? 'int-edit' : 'task-edit') + '" data-id="' + k.id + '" title="Редактировать">' + ic('pencil') + '</button>') +
         '<button class="ico-btn" data-action="task-del" data-id="' + k.id + '" title="Удалить">' + ic('trash') + '</button></div>' + noteH + subs + (open ? intsHtml(k, arch) : '') + '</div>';
     }).join('') : '<div class="empty">' + (arch ? 'В этот день действий не было.' : 'Пока пусто') + '</div>';
     var gr = greeting(), lay = S.settings.layout, wkOn = !S.settings.hideWeek && !arch;
@@ -1851,8 +1859,9 @@
     var cur = ps.filter(function (p) { return p.id === UI.projId; })[0];
     if (!cur || (UI.projFilter !== 'all' && cur.status !== UI.projFilter)) cur = shown[0] || null;
     UI.projId = cur ? cur.id : null;
+    var PF_IC = { all: '◈', active: '▶', done: '✔', frozen: '❄' };
     var tabs = [['all', 'Все'], ['active', 'Активные'], ['done', 'Завершённые'], ['frozen', 'Замороженные']].map(function (f) {
-      return '<button class="tab ' + (UI.projFilter === f[0] ? 'on' : '') + '" data-action="proj-filter" data-f="' + f[0] + '">' + f[1] + ' <em>' + cnt[f[0]] + '</em></button>';
+      return '<button class="tab pf-t pf-' + f[0] + (UI.projFilter === f[0] ? ' on' : '') + '" data-action="proj-filter" data-f="' + f[0] + '"><i class="pf-i">' + PF_IC[f[0]] + '</i><span>' + f[1] + '</span><em>' + cnt[f[0]] + '</em></button>';
     }).join('');
     var cards = shown.length ? shown.map(function (p) {
       var pc = projPct(p), dn = p.actions.filter(function (a) { return a.done; }).length;
@@ -2676,7 +2685,7 @@
     var sc = inn.firstElementChild; if (!sc || !sc.classList.contains('lb-sc')) return;
     var box = inn.parentNode, id = box.getAttribute('data-b');
     sc.style.cssText = '';
-    if (id === 'tasks') return;
+    if (id === 'tasks' || id === 'add' || id === 'int' || id === 'week') return;
     var aw = inn.clientWidth, ah = inn.clientHeight; if (!aw || !ah) return;
     sc.style.height = 'auto'; sc.classList.add('measure');
     var k = 1, need = sc.scrollHeight;
@@ -2768,7 +2777,8 @@
     applyFx();
     document.body.setAttribute('data-blur', s0.blur === 'on' ? 'full' : (s0.blur || 'off'));
     document.documentElement.lang = s0.lang || 'ru'; if (window.LO_LANG) window.LO_LANG.pass(s0.lang || 'ru');
-    window.lifeOwlApi.setZoom((SIZE_K[(S && S.settings.size) || 'medium'] || 1) * ((S && S.settings.uiScale) || 100) / 100);
+    var AUTO = Math.max(.78, Math.min(1, (window.screen.availWidth || 1920) / 1700, (window.screen.availHeight || 1080) / 950)); /* на небольших экранах интерфейс сам становится компактнее */
+    window.lifeOwlApi.setZoom(Math.round((SIZE_K[(S && S.settings.size) || 'medium'] || 1) * ((S && S.settings.uiScale) || 100) / 100 * AUTO * 1000) / 1000);
     applyLook();
   }
 
@@ -2873,17 +2883,24 @@
       taskModal();
     },
     'int-hab': function (el) { var h = byId(S.habits, el.getAttribute('data-hid')); if (!h) return; H['hab-toggle']({ getAttribute: function (a) { return a === 'data-id' ? h.id : today(); } }); },
-    'int-did': function (el) { UI.idid = { tid: el.getAttribute('data-tid'), pid: el.getAttribute('data-pid'), mode: 'act', par: '', text: '' }; didModal(); },
-    'id-mode': function (el) { var I = UI.idid; I.text = ($('#id-t') || {}).value || ''; I.mode = el.getAttribute('data-m'); didModal(); },
+    'int-did': function (el) { UI.idid = { tid: el.getAttribute('data-tid'), pid: el.getAttribute('data-pid'), mode: 'act', par: '', text: '', subs: [''] }; didModal(); },
+    'id-mode': function (el) { idRead(); UI.idid.mode = el.getAttribute('data-m'); didModal(); },
+    'id-par': function (el) { idRead(); UI.idid.par = el.getAttribute('data-id'); didModal(); },
+    'id-more': function () { idRead(); UI.idid.subs.push(''); didModal(); var r = $$('#modal .id-s'); if (r.length) r[r.length - 1].focus(); },
+    'id-rm': function (el) { idRead(); UI.idid.subs.splice(+el.getAttribute('data-i'), 1); didModal(); },
     'id-ok': function () {
-      var I = UI.idid, k = byId(S.tasks, I.tid), p = byId(S.projects, I.pid); if (!k || !p) return;
-      var tx = (($('#id-t') || {}).value || '').trim(); if (!tx) { toast('Напиши, что ты сделал'); return; }
-      var before = dayStats(today()).total, node = { id: uid(), cat: Date.now() - QUICK_SEC * 2000, text: tx, icon: '', done: true, doneDate: k.date, subs: [], from: k.id, day: k.date };
+      idRead(); var I = UI.idid, k = byId(S.tasks, I.tid), p = byId(S.projects, I.pid); if (!k || !p) return;
+      var subsT = (I.subs || []).map(function (x) { return (x || '').trim(); }).filter(Boolean), before = dayStats(today()).total, base = Date.now() - QUICK_SEC * 2000;
+      function mk(tx, i) { return { id: uid(), cat: base + i, text: tx, icon: '', done: true, doneDate: k.date, subs: [], from: k.id, day: k.date }; }
       if (I.mode === 'sub') {
-        var pid = ($('#id-p') || {}).value, f = pid && bmFind(p.actions, pid);
+        var f = I.par && bmFind(p.actions, I.par);
         if (!f) { toast('Выбери действие, в которое входит поддействие'); return; }
-        f.n.subs = f.n.subs || []; f.n.subs.push(node); bmRecalc(p, node.id);
-      } else p.actions.push(node);
+        if (!subsT.length) { toast('Напиши, что ты сделал'); return; }
+        f.n.subs = f.n.subs || []; subsT.forEach(function (tx, i) { var nd = mk(tx, i); f.n.subs.push(nd); bmRecalc(p, nd.id); });
+      } else {
+        var tx = (I.text || '').trim(); if (!tx) { toast('Напиши, что ты сделал'); return; }
+        var node = mk(tx, 0); node.subs = subsT.map(function (x, i) { return mk(x, i + 1); }); p.actions.push(node); bmRecalc(p, node.id);
+      }
       syncProjStatus(p); closeModal(); save(); var after = dayStats(today()).total; softRender();
       if (after > before) gainToast('Записано в проект', after - before);
     },
@@ -3323,6 +3340,14 @@
       save(); render(); layBtns();
     },
     'int-quick': function () { UI.iq = { tab: 'proj', sel: { proj: {}, hab: {} }, name: '' }; iqModal(); },
+    'int-edit': function (el) {
+      var k = byId(S.tasks, el.getAttribute('data-id')); if (!k || !k.ints) return;
+      var sel = { proj: {}, hab: {} }; k.ints.forEach(function (x) { if (x.k === 'hab') sel.hab[x.hid] = 1; else sel.proj[x.pid] = 1; });
+      UI.iq = { tab: Object.keys(sel.proj).length || !Object.keys(sel.hab).length ? 'proj' : 'hab', sel: sel, name: k.text, icon: k.icon || '🔗', edit: k.id }; iqModal();
+    },
+    'iq-emo-tog': function () { iqRead(); UI.iq.emo = !UI.iq.emo; iqModal(true); },
+    'iq-emo-tab': function (el) { iqRead(); UI.iq.ecat = +el.getAttribute('data-i'); iqModal(true); },
+    'iq-emo': function (el) { iqRead(); UI.iq.icon = el.getAttribute('data-e'); UI.iq.emo = false; iqModal(true); },
     'iq-tab': function (el) { iqRead(); UI.iq.tab = el.getAttribute('data-t'); iqModal(); },
     'iq-tog': function (el) {
       iqRead(); var Q = UI.iq, k = el.getAttribute('data-k'), id = el.getAttribute('data-id');
@@ -3334,7 +3359,14 @@
       Object.keys(Q.sel.hab).forEach(function (id) { ints.push({ id: uid(), k: 'hab', hid: id }); });
       if (!ints.length) { toast('Выбери хотя бы один проект или привычку'); return; }
       var nm = (Q.name || '').trim() || (Object.keys(Q.sel.proj).length >= Object.keys(Q.sel.hab).length ? 'Проекты' : 'Привычки');
-      S.tasks.push({ id: uid(), text: nm, icon: '🔗', done: false, date: today(), cat: Date.now(), ints: ints });
+      if (Q.edit) {
+        var ek = byId(S.tasks, Q.edit); if (ek) {
+          var old = ek.ints || [], keep = [];
+          ints.forEach(function (x) { var m = old.filter(function (y) { return y.k === x.k && (x.k === 'hab' ? y.hid === x.hid : y.pid === x.pid); })[0]; keep.push(m || x); });
+          ek.ints = keep; ek.text = nm; ek.icon = Q.icon || '🔗'; closeModal(); save(); render(); return;
+        }
+      }
+      S.tasks.push({ id: uid(), text: nm, icon: Q.icon || '🔗', done: false, date: today(), cat: Date.now(), ints: ints });
       UI.taskOpen[S.tasks[S.tasks.length - 1].id] = true; closeModal(); save(); render();
     },
     'ch-add': function () { UI.chm = { opts: [{ text: '', subs: [], icon: '' }, { text: '', subs: [], icon: '' }], act: 0, src: 'act', cfg: null }; chModal(); },
@@ -3371,6 +3403,7 @@
     },
     'ch-del': function (el) { var id = el.getAttribute('data-id'); S.choices = (S.choices || []).filter(function (c) { return c.id !== id; }); save(); render(); },
     'n3-zoom': function (el) { var z = Math.max(.7, Math.min(2.4, Math.round(((S.settings.n3z || 1) + +el.getAttribute('data-d') * .15) * 100) / 100)); S.settings.n3z = z; var c = $('.composer3'); if (c) c.style.setProperty('--n3z', z); var l = $('#n3z-v'); if (l) l.textContent = Math.round(z * 100) + '%'; save(); },
+    'hall-frame': function (el) { S.settings.hallFrame = el.getAttribute('data-f'); save(); render(); },
     'ord-open': function (el) { ordModal(el.getAttribute('data-o')); },
     'ord-mv': function (el) {
       var key = el.getAttribute('data-o'), D = ORD[key], arr = ordGet(key), i = +el.getAttribute('data-i'), j = i + +el.getAttribute('data-d');
@@ -3763,8 +3796,14 @@
       if (DR.mt !== 'touch' && DR.mo && !DR.space) {
         var N = UI.n3, wr = DR.wr || (DR.wr = $('#dr-wrap').getBoundingClientRect()), cw = DR.cw || (DR.cw = cv.getBoundingClientRect().width), m = N.brush === 'eraser' ? 2 : N.brush === 'marker' ? 2.2 : N.brush === 'spray' ? 4.4 : N.brush === 'pen' ? 1.6 : 1;
         var dia = Math.max(3, N.size * m * (cw / cv.width)), key = Math.round(dia * 10) + N.brush;
-        if (DR.rk !== key) { DR.rk = key; ring.style.width = dia + 'px'; ring.style.height = dia + 'px'; ring.style.borderStyle = N.brush === 'eraser' ? 'dashed' : 'solid'; }
-        ring.style.transform = 'translate3d(' + (DR.mx - wr.left - dia / 2) + 'px,' + (DR.my - wr.top - dia / 2) + 'px,0)'; ring.style.opacity = '1';
+        if (DR.rk !== key) {
+          DR.rk = key; ring.style.width = dia + 'px'; ring.style.height = dia + 'px'; ring.style.borderStyle = N.brush === 'eraser' ? 'dashed' : 'solid';
+          /* системный курсор рисуется самой ОС без задержки; кольцо на JS — только для очень больших кистей */
+          if (dia <= 118) { var D = Math.ceil(dia) + 6, c = D / 2, dash = N.brush === 'eraser' ? ' stroke-dasharray="3 2"' : ''; DR.cur = 'url("data:image/svg+xml,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="' + D + '" height="' + D + '"><circle cx="' + c + '" cy="' + c + '" r="' + (dia / 2 + 1) + '" fill="none" stroke="#000" stroke-opacity=".55" stroke-width="3"/><circle cx="' + c + '" cy="' + c + '" r="' + (dia / 2 + 1) + '" fill="none" stroke="#fff" stroke-width="1.5"' + dash + '/><circle cx="' + c + '" cy="' + c + '" r="1.4" fill="#fff"/></svg>') + '") ' + c + ' ' + c + ', crosshair'; } else DR.cur = '';
+          cv.style.cursor = DR.cur || 'none';
+        }
+        ring.style.opacity = '0';
+        if (!DR.cur) { ring.style.transform = 'translate3d(' + (DR.mx - wr.left - dia / 2) + 'px,' + (DR.my - wr.top - dia / 2) + 'px,0)'; ring.style.opacity = '1'; }
       } else ring.style.opacity = '0';
     });
     if (DR.tp && DR.tp[e.pointerId]) {
