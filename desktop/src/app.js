@@ -1222,7 +1222,7 @@
       var p = byId(S.projects, it.pid); if (!p) return '';
       var nodes = intNodes(k, p), dn = nodes.filter(function (x) { return x.n.done; }).length, okc = dn >= INT_MIN;
       var isInt = function (q) { return q && q.from === k.id && q.day === k.date; };
-      return '<div class="sub int-h-row int-proj"><span class="int-dot">' + intIc('proj') + '</span><span class="txt"><b>' + esc(p.name) + '</b><em class="t-link">проект</em><em class="int-cnt' + (okc ? ' ok' : '') + '" title="Записей за день">' + dn + ' / ' + INT_MIN + '</em></span>' + (arch ? '' : '<button class="chip-t sm int-did" data-action="int-did" data-tid="' + k.id + '" data-pid="' + p.id + '">' + ic('pencil') + ' Что я сделал</button>') + '</div>' +
+      return '<div class="sub int-h-row int-proj"><span class="int-dot">' + intIc('proj') + '</span><span class="txt"><b>' + esc(p.name) + '</b><em class="t-link">проект</em><em class="int-cnt' + (okc ? ' ok' : '') + '" title="Записей за день">' + dn + ' / ' + INT_MIN + '</em></span>' + (arch ? '' : '<button class="chip-t sm int-did" data-action="int-did" data-tid="' + k.id + '" data-pid="' + p.id + '">＋ Записать, что сделал</button>') + '</div>' +
         nodes.filter(function (x) { return !isInt(x.par); }).map(function (x) { return intNodeHtml(k, p, x.n, 1, arch, x.par ? x.par.text : ''); }).join('');
     }).join('') + '</div>';
   }
@@ -1617,33 +1617,58 @@
       (cards ? '<div class="hall-grid">' + cards + '</div>' : '<div class="glass hall-empty"><svg viewBox="0 0 24 24">' + SVG.medal + '</svg><b>Доска пока пуста</b></div>');
   }
   function choiceHtml() {
-    var list = (S.choices || []).filter(function (c) { return !c.picked; }); UI.chOpen = UI.chOpen || {};
-    return '<section class="glass choice"><div class="ch-h"><b>Выбор на день</b><button class="chip-t sm" data-action="ch-add">＋ Добавить</button></div>' +
+    var list = (S.choices || []).filter(function (c) { return !c.picked; }); UI.chOpen = UI.chOpen || {}; if (!list.length) return '';
+    return '<section class="glass choice"><div class="ch-h"><b>Выборочные действия</b></div>' +
       (list.length ? list.map(function (c) {
         var open = UI.chOpen[c.id] !== false;
         return '<div class="ch-card' + (open ? ' open' : '') + '"><div class="ch-q"><button class="ico-btn sm ch-fold" data-action="ch-fold" data-id="' + c.id + '"><b class="' + (open ? 'up' : '') + '">▾</b></button><span>Что сделать сегодня?</span><button class="ico-btn sm" data-action="ch-del" data-id="' + c.id + '" title="Удалить">' + ic('trash') + '</button></div>' +
           (open ? '<div class="ch-os">' + c.opts.map(function (o, i) {
             return '<div class="row task ch-row"><button class="check" data-action="ch-pick" data-id="' + c.id + '" data-i="' + i + '"></button><span class="txt">' + esc(o.text) + '<em class="t-link">выбор</em></span>' + ((o.subs || []).length ? '<span class="sub-cnt">' + o.subs.length + ' подд.</span>' : '') + '</div>';
           }).join('') + '</div>' : '') + '</div>';
-      }).join('') : '<div class="ch-empty">Добавь 2–4 варианта: выбранный станет обычным действием дня.</div>') + '</section>';
+      }).join('') : '') + '</section>';
   }
   function chRead() {
     var M = UI.chm; if (!M) return;
-    $$('#modal .chn-in').forEach(function (e) { var o = M.opts[+e.getAttribute('data-i')]; if (o) o.text = e.value.trim(); });
+    var n = $('#chm-name'); if (n && M.opts[M.act]) M.opts[M.act].text = n.value.trim();
+    var c = $('#chc-name'); if (c && M.cfg != null && M.opts[M.cfg]) M.opts[M.cfg].text = c.value.trim();
+    var q = $('#chm-q'); if (q) M.q = q.value;
   }
   function chModal() {
-    var M = UI.chm, t = today(), names = {};
-    S.tasks.forEach(function (k) { if (!k.link && !k.ch && (k.text || '').trim() && k.date === t) names[k.text.trim()] = 1; });
-    var sug = Object.keys(names).slice(0, 8);
-    openModal('<h3>Выборочное действие</h3><div class="chm-list">' +
-      M.opts.map(function (o, i) {
-        return '<div class="chm-card"><div class="chm-h"><em>' + (i + 1) + '</em><input class="chn-in" data-i="' + i + '" maxlength="80" value="' + esc(o.text) + '" placeholder="Название действия">' + (M.opts.length > 2 ? '<button class="ico-btn sm" data-action="ch-slot-del" data-i="' + i + '">' + ic('trash') + '</button>' : '') + '</div>' +
-          (sug.length ? '<div class="chm-sug">' + sug.map(function (n) { return '<button type="button" class="chip-t sm' + (o.text === n ? ' on' : '') + '" data-action="ch-fill" data-i="' + i + '" data-v="' + esc(n) + '">' + esc(n) + '</button>'; }).join('') + '</div>' : '') +
-          (o.subs.length ? '<div class="chm-subs">' + o.subs.map(function (x, j) { return '<div class="ta-sub"><em>' + (j + 1) + '</em><span>' + esc(x) + '</span><button type="button" class="ico-btn sm" data-action="ch-sub-del" data-i="' + i + '" data-j="' + j + '">' + ic('trash') + '</button></div>'; }).join('') + '</div>' : '') +
-          '<div class="ta-add"><input class="chs-in" data-i="' + i + '" maxlength="120" placeholder="Поддействие (необязательно)"><button type="button" class="ico-btn plus" data-action="ch-sub-add" data-i="' + i + '" title="Добавить поддействие">＋</button></div></div>';
-      }).join('') + (M.opts.length < 4 ? '<button type="button" class="chm-more" data-action="ch-slot-add">＋ Ещё вариант</button>' : '') + '</div>' +
-      '<div class="modal-actions"><button class="btn-soft" data-action="modal-close">Отмена</button><button class="btn-primary" data-action="ch-save">Создать выбор</button></div>');
+    var M = UI.chm, t = today(); M.src = M.src || 'act'; M.act = M.act || 0;
+    if (M.cfg != null) {
+      var o = M.opts[M.cfg], ci = M.ecat || 0;
+      openModal('<div class="chm2 chc"><div class="chm-title"><button class="ico-btn sm" data-action="ch-back" title="Назад">' + ic('chevL') + '</button><b>Настройка действия</b></div>' +
+        '<label class="iq-nm"><span>Название</span><input id="chc-name" maxlength="80" value="' + esc(o.text) + '" placeholder="Введите название действия"></label>' +
+        '<div class="chc-emo"><div class="chc-cur"><b>' + (o.icon || '☺') + '</b><span>Смайлик действия</span>' + (o.icon ? '<button type="button" class="chip-t sm" data-action="ch-emo" data-e="' + o.icon + '">Убрать</button>' : '') + '</div>' +
+        '<div class="emo-tabs">' + EMO_CATS.map(function (c, i) { return '<button type="button" class="emo-tab ' + (i === ci ? 'on' : '') + '" data-action="ch-emo-tab" data-i="' + i + '" title="' + c[1] + '">' + c[0] + '</button>'; }).join('') + '</div>' +
+        '<div class="emo-grid">' + EMO_CATS[ci][2].map(function (e) { return '<button type="button" class="ico-pick ' + (o.icon === e ? 'on' : '') + '" data-action="ch-emo" data-e="' + e + '">' + e + '</button>'; }).join('') + '</div></div>' +
+        '<div class="chc-h">Поддействия</div>' + (o.subs.length ? '<div class="chm-subs">' + o.subs.map(function (x, j) { return '<div class="ta-sub"><em>' + (j + 1) + '</em><span>' + esc(x) + '</span><button type="button" class="ico-btn sm" data-action="ch-sub-del" data-i="' + M.cfg + '" data-j="' + j + '">' + ic('trash') + '</button></div>'; }).join('') + '</div>' : '') +
+        '<div class="ta-add"><input class="chs-in" data-i="' + M.cfg + '" maxlength="120" placeholder="Новое поддействие"><button type="button" class="ico-btn plus" data-action="ch-sub-add" data-i="' + M.cfg + '" title="Добавить поддействие">＋</button></div>' +
+        '<div class="modal-actions">' + (M.opts.length > 2 ? '<button class="btn-soft" data-action="ch-slot-del" data-i="' + M.cfg + '">Удалить вариант</button>' : '') + '<button class="btn-primary" data-action="ch-back">Готово</button></div></div>', true);
+      return;
+    }
+    var acts = [], seen = {};
+    S.tasks.forEach(function (k) { var x = (k.text || '').trim(); if (k.date === t && x && !k.link && !k.ch && !(k.ints && k.ints.length) && !seen[x]) { seen[x] = 1; acts.push(k); } });
+    var projs = S.projects || [], isA = M.src === 'act', q = (M.q || '').toLowerCase();
+    var rows = (isA ? acts.map(function (k) { return { n: k.text.trim(), id: k.id, ic: k.icon || '' }; }) : projs.map(function (p) { return { n: p.name, id: p.id, ic: '' }; }));
+    function tile(k, label, n, icn) { return '<button type="button" class="iq-tile' + (M.src === k ? ' on' : '') + '" data-action="ch-src" data-t="' + k + '"><span class="iq-ti">' + intIc(icn) + '</span><b>' + label + '</b><span class="iq-bd"><i>' + n + '</i></span></button>'; }
+    var slots = M.opts.map(function (o, i) {
+      return (i === 2 ? '' : '') + '<div class="chm-oc' + (i === M.act ? ' act' : '') + '" data-action="ch-act" data-i="' + i + '"><div class="chm-oh"><span class="chm-ob">' + (o.icon || (i + 1)) + '</span><b>' + (o.text ? esc(o.text) : '<i>Вариант ' + (i + 1) + '</i>') + '</b><button type="button" class="ico-btn sm chm-gear" data-action="ch-cfg" data-i="' + i + '" title="Настроить">⚙</button></div>' +
+        (o.subs || []).map(function (x) { return '<div class="chm-os">' + esc(x) + '</div>'; }).join('') + '<button type="button" class="chm-os add" data-action="ch-cfg" data-i="' + i + '">＋</button></div>';
+    });
+    var grid = ''; slots.forEach(function (h, i) { grid += h; if (i % 2 === 0 && i < slots.length - 1) grid += '<div class="chm-or"><span>или</span></div>'; });
+    openModal('<div class="chm2"><div class="chm-title"><span class="chm-tic">⑂</span><b>Выборочное действие</b><small>выбери одно из нескольких — сегодня сделаешь только его</small></div>' +
+      '<div class="iq-tiles">' + tile('act', 'Действия', acts.length, 'hab') + tile('proj', 'Проекты', projs.length, 'proj') + '</div>' +
+      '<div class="chm-pl"><div class="chm-pl-h"><b>' + (isA ? 'Текущие действия' : 'Текущие проекты') + '</b><input id="chm-q" type="search" placeholder="Поиск" value="' + esc(M.q || '') + '"></div><div class="chm-rows">' +
+      (rows.length ? rows.map(function (r) { return '<button type="button" class="chm-row' + (q && r.n.toLowerCase().indexOf(q) < 0 ? ' hid' : '') + '" data-action="ch-fill" data-v="' + esc(r.n) + '" data-id="' + r.id + '">' + (r.ic ? '<span class="chm-ri">' + esc(r.ic) + '</span>' : '<span class="chm-ri">' + intIc(isA ? 'hab' : 'proj') + '</span>') + '<b>' + esc(r.n) + '</b><i>＋</i></button>'; }).join('') : '<div class="empty sm">' + (isA ? 'На сегодня действий нет — впиши название ниже' : 'Проектов пока нет') + '</div>') + '</div></div>' +
+      '<label class="chm-nm"><span class="chm-nb">' + (M.opts[M.act].icon || (M.act + 1)) + '</span><input id="chm-name" maxlength="80" value="' + esc(M.opts[M.act].text) + '" placeholder="Введите название действия"></label>' +
+      '<div class="chm-opts">' + grid + (M.opts.length < 4 ? '<button type="button" class="chm-more" data-action="ch-slot-add">＋ Ещё вариант</button>' : '') + '</div>' +
+      '<div class="modal-actions"><button class="btn-soft" data-action="modal-close">Отмена</button><button class="btn-primary" data-action="ch-save">Создать выбор</button></div></div>', true);
   }
+  document.addEventListener('input', function (e) {
+    var t = e.target; if (!t || t.id !== 'chm-q') return; var q = t.value.toLowerCase(); if (UI.chm) UI.chm.q = t.value;
+    $$('#modal .chm-row').forEach(function (r) { r.classList.toggle('hid', q && r.textContent.toLowerCase().indexOf(q) < 0); });
+  });
   function iqRead() { var Q = UI.iq, n = $('#iq-name'); if (Q && n) Q.name = n.value; }
   function iqModal() {
     var Q = UI.iq, hs = S.habits.filter(function (h) { return !h.sys; }), ps = S.projects, ns = Object.keys(Q.sel.proj).length, nh = Object.keys(Q.sel.hab).length;
@@ -1651,13 +1676,17 @@
       return '<button type="button" class="iq-tile' + (Q.tab === k ? ' on' : '') + (nSel ? ' has' : '') + '" data-action="iq-tab" data-t="' + k + '"><span class="iq-ti">' + intIc(icn) + '</span><b>' + label + '</b><span class="iq-bd' + (nSel ? ' sel' : '') + '"><i>' + (nSel || total) + '</i></span></button>';
     }
     var items = (Q.tab === 'proj' ? ps.map(function (p) { return [p.id, p.name, 'проект', intIc('proj')]; }) : hs.map(function (h) { return [h.id, h.name, h.type === 'bad' ? 'вредная' : 'полезная', h.type === 'bad' ? WARN_SVG : ic('tick')]; }));
-    openModal('<h3>Взаимодействие</h3><div class="iq-tiles">' + tile('proj', 'Проекты', ps.length, ns, 'proj') + tile('hab', 'Привычки', hs.length, nh, 'hab') + '</div>' +
-      '<div class="iq-list2">' + (items.length ? items.map(function (r) {
+    var chosen = [];
+    ps.forEach(function (p) { if (Q.sel.proj[p.id]) chosen.push([p.name, intIc('proj'), 'proj', p.id]); });
+    hs.forEach(function (h) { if (Q.sel.hab[h.id]) chosen.push([h.name, h.type === 'bad' ? WARN_SVG : ic('tick'), 'hab', h.id]); });
+    openModal('<div class="chm2 iqm"><div class="chm-title"><span class="chm-tic">⇄</span><b>' + (Q.tab === 'proj' ? 'Взаимодействие с проектами' : 'Взаимодействие с привычками') + '</b></div><div class="iq-plate"><div class="iq-tiles pills">' + tile('proj', 'Проекты', ps.length, ns, 'proj') + tile('hab', 'Привычки', hs.length, nh, 'hab') + '</div>' +
+      '<div class="iq-hint">' + (Q.tab === 'proj' ? 'Выберите текущие проекты для взаимодействия' : 'Выберите привычки для взаимодействия') + '</div><div class="iq-cols"><div class="iq-list2">' + (items.length ? items.map(function (r) {
         var on = !!Q.sel[Q.tab][r[0]];
         return '<button type="button" class="iq-r' + (on ? ' on' : '') + '" data-action="iq-tog" data-k="' + Q.tab + '" data-id="' + r[0] + '"><span class="iq-ic">' + r[3] + '</span><b>' + esc(r[1]) + '</b><small>' + r[2] + '</small><i class="iq-ck">' + (on ? ic('tick') : '') + '</i></button>';
       }).join('') : '<div class="empty sm">' + (Q.tab === 'proj' ? 'Проектов пока нет' : 'Привычек пока нет') + '</div>') + '</div>' +
+      '<div class="iq-side"><small>Выбрано · ' + chosen.length + '</small>' + (chosen.length ? chosen.map(function (c) { return '<button type="button" class="iq-chip" data-action="iq-tog" data-k="' + c[2] + '" data-id="' + c[3] + '"><span>' + c[1] + '</span><b>' + esc(c[0]) + '</b><i>×</i></button>'; }).join('') : '<em>Пока ничего не выбрано</em>') + '</div></div></div>' +
       '<label class="iq-nm"><span>Название взаимодействия</span><input id="iq-name" maxlength="80" value="' + esc(Q.name || '') + '" placeholder="Например: Рабочие проекты"></label>' +
-      '<div class="modal-actions"><button class="btn-soft" data-action="modal-close">Отмена</button><button class="btn-primary" data-action="iq-ok"' + (ns + nh ? '' : ' disabled') + '>Создать · ' + (ns + nh) + '</button></div>');
+      '<div class="modal-actions"><button class="btn-soft" data-action="modal-close">Отмена</button><button class="btn-primary" data-action="iq-ok"' + (ns + nh ? '' : ' disabled') + '>Создать · ' + (ns + nh) + '</button></div></div>', true);
   }
   var ORD = {
     day: { key: 'dayOrder', def: ['plain', 'ints', 'choice'], names: { plain: 'Обычные действия', ints: 'Взаимодействия', choice: 'Выборочные' } },
@@ -1701,7 +1730,7 @@
         (k.ind && n ? '<i class="lvl ' + lvl + '" title="Сложность: ' + n + ' поддействий"></i>' : '') +
         (arch || k.link ? '' : '<button class="ico-btn" data-action="task-sub" data-id="' + k.id + '" title="Добавить поддействие">＋</button>') + ((n || nI) ? '<button class="sub-cnt" data-action="task-open" data-id="' + k.id + '">' + (n ? dn + '/' + n : '🔗 ' + nI) + ' <b class="' + (open ? 'up' : '') + '">▾</b></button>' : '') +
         (arch || k.link ? '' : '<button class="ico-btn ' + (k.tpl ? 'pinon' : '') + '" data-action="task-pin" data-id="' + k.id + '" title="Закрепить на каждый день">' + ic('pin') + '</button>') +
-        '<button class="ico-btn" data-action="task-edit" data-id="' + k.id + '" title="Редактировать">' + ic('pencil') + '</button>' +
+        (nI || k.link ? '' : '<button class="ico-btn" data-action="task-edit" data-id="' + k.id + '" title="Редактировать">' + ic('pencil') + '</button>') +
         '<button class="ico-btn" data-action="task-del" data-id="' + k.id + '" title="Удалить">' + ic('trash') + '</button></div>' + noteH + subs + (open ? intsHtml(k, arch) : '') + '</div>';
     }).join('') : '<div class="empty">' + (arch ? 'В этот день действий не было.' : 'Пока пусто') + '</div>';
     var gr = greeting(), lay = S.settings.layout, wkOn = !S.settings.hideWeek && !arch;
@@ -1713,7 +1742,7 @@
     var kpdH = '<div class="glass kpd-today">' + ringSvg(st.pct, 104) + '<div class="kt-txt"><small>КПД сегодня</small><b>' + st.total + ' из ' + DAY_MAX + '</b><span>заданий выполнено</span></div></div>';
     var foot = '<div class="today-foot"><button class="chip" data-action="day-pick">' + ic('cal') + ' ' + fmtShort(t) + '</button>' + (arch ? '<button class="btn-soft" data-action="day-today">Вернуться к сегодня</button>' : finishBtn()) + '</div>';
     var dock = arch ? '' : '<div class="fab-dock"><button class="fab-add" data-action="task-add" title="Добавить действие"><span>＋</span>Действие</button>' + (UI.layEdit ? '<button class="fab-edit on" data-action="lay-done">Готово</button>' : '<button class="fab-edit" data-action="lay-edit" title="Менять расположение и размер блоков">✎ Редактировать</button>') + '</div>';
-    var parts = { hero: heroH, tasks: tasksH, msg: msgH, add: addH, kpd: kpdH, week: '<div class="wk-solo">' + (wkOn ? weekChip() : '') + '</div>', int: '<button class="btn-add alt" data-action="int-quick"><span class="plus">⇄</span><span>Добавить взаимодействие</span></button>', choice: choiceHtml() };
+    var parts = { hero: heroH, tasks: tasksH, msg: msgH, add: addH, kpd: kpdH, week: '<div class="wk-solo">' + (wkOn ? weekChip() : '') + '</div>', int: '<button class="btn-add" data-action="int-quick"><span class="plus">＋</span><span>Добавить взаимодействие</span></button>', choice: '<div class="add-stack"><button class="btn-add" data-action="ch-add"><span class="plus">＋</span><span>Добавить выборочное действие</span></button></div>' + choiceHtml() };
     if (lay.custom && !arch) {
       lay.hidden = lay.hidden || []; if (!lay.v34) { lay.v34 = 1; ['int', 'choice'].forEach(function (h) { if (lay.hidden.indexOf(h) < 0) lay.hidden.push(h); }); }
       var ed = !!UI.layEdit, LY = layItems(), hid = lay.hidden || [];
@@ -1731,7 +1760,7 @@
       }).join('');
       return '<div class="today custom' + (ed ? ' editing' : '') + '">' + bar + '<div class="lgrid" id="lgrid" style="height:' + Math.max(1, Hh) * LROW + 'px">' + ovs + blocks + '</div>' + (ed ? '' : foot) + dock + '</div>';
     }
-    return '<div class="today' + (arch ? ' arch' : '') + '">' + heroH + (arch ? archHtml(t) : '') + '<div class="today-grid">' + tasksH + '<aside class="side">' + msgH + addH + '<div class="add-pair"><button class="btn-add alt" data-action="int-quick"><span class="plus">⇄</span><span>Взаимодействие</span></button><button class="btn-add alt" data-action="ch-add"><span class="plus">⑂</span><span>Выбор</span></button></div>' + (arch ? '' : choiceHtml()) + kpdH + '</aside></div>' + foot + dock + '</div>';
+    return '<div class="today' + (arch ? ' arch' : '') + '">' + heroH + (arch ? archHtml(t) : '') + '<div class="today-grid">' + tasksH + '<aside class="side">' + msgH + '<div class="add-stack">'+addH+'<button class="btn-add" data-action="int-quick"><span class="plus">＋</span><span>Добавить взаимодействие</span></button><button class="btn-add" data-action="ch-add"><span class="plus">＋</span><span>Добавить выборочное действие</span></button></div>' + (arch ? '' : choiceHtml()) + kpdH + '</aside></div>' + foot + dock + '</div>';
   }
 
   /* ---------- вид: Мотивации ---------- */
@@ -3308,10 +3337,22 @@
       S.tasks.push({ id: uid(), text: nm, icon: '🔗', done: false, date: today(), cat: Date.now(), ints: ints });
       UI.taskOpen[S.tasks[S.tasks.length - 1].id] = true; closeModal(); save(); render();
     },
-    'ch-add': function () { UI.chm = { opts: [{ text: '', subs: [] }, { text: '', subs: [] }] }; chModal(); },
-    'ch-fill': function (el) { chRead(); UI.chm.opts[+el.getAttribute('data-i')].text = el.getAttribute('data-v'); chModal(); },
-    'ch-slot-add': function () { chRead(); if (UI.chm.opts.length < 4) UI.chm.opts.push({ text: '', subs: [] }); chModal(); },
-    'ch-slot-del': function (el) { chRead(); if (UI.chm.opts.length > 2) UI.chm.opts.splice(+el.getAttribute('data-i'), 1); chModal(); },
+    'ch-add': function () { UI.chm = { opts: [{ text: '', subs: [], icon: '' }, { text: '', subs: [], icon: '' }], act: 0, src: 'act', cfg: null }; chModal(); },
+    'ch-src': function (el) { chRead(); UI.chm.src = el.getAttribute('data-t'); chModal(); },
+    'ch-act': function (el) { chRead(); UI.chm.act = +el.getAttribute('data-i'); chModal(); },
+    'ch-cfg': function (el) { chRead(); UI.chm.act = UI.chm.cfg = +el.getAttribute('data-i'); chModal(); var n = $('#modal .chs-in'); if (n) n.focus(); },
+    'ch-back': function () { chRead(); UI.chm.cfg = null; chModal(); },
+    'ch-emo-tab': function (el) { chRead(); UI.chm.ecat = +el.getAttribute('data-i'); chModal(); },
+    'ch-emo': function (el) { chRead(); var o = UI.chm.opts[UI.chm.cfg], e = el.getAttribute('data-e'); o.icon = o.icon === e ? '' : e; chModal(); },
+    'ch-fill': function (el) {
+      chRead(); var M = UI.chm, o = M.opts[M.act], v = el.getAttribute('data-v'), id = el.getAttribute('data-id');
+      o.text = v;
+      if (M.src === 'act') { var k = byId(S.tasks, id); if (k) { if (k.icon && !o.icon) o.icon = k.icon; if (!o.subs.length && k.subs) o.subs = k.subs.map(function (x) { return x.text; }); } }
+      var nx = -1; M.opts.forEach(function (x, i) { if (nx < 0 && !x.text) nx = i; }); if (nx >= 0) M.act = nx;
+      chModal();
+    },
+    'ch-slot-add': function () { chRead(); if (UI.chm.opts.length < 4) { UI.chm.opts.push({ text: '', subs: [], icon: '' }); UI.chm.act = UI.chm.opts.length - 1; } chModal(); },
+    'ch-slot-del': function (el) { chRead(); var M = UI.chm; if (M.opts.length > 2) { M.opts.splice(+el.getAttribute('data-i'), 1); M.cfg = null; M.act = 0; } chModal(); },
     'ch-sub-add': function (el) { chRead(); var i = el.getAttribute('data-i'), o = UI.chm.opts[+i], inp = $('#modal .chs-in[data-i="' + i + '"]'); var v = inp ? inp.value.trim() : ''; if (v) o.subs.push(v); chModal(); var n = $('#modal .chs-in[data-i="' + i + '"]'); if (n) n.focus(); },
     'ch-sub-del': function (el) { chRead(); UI.chm.opts[+el.getAttribute('data-i')].subs.splice(+el.getAttribute('data-j'), 1); chModal(); },
     'ch-save': function () {
@@ -3325,7 +3366,7 @@
     'ch-pick': function (el) {
       var c = byId(S.choices || [], el.getAttribute('data-id')), i = +el.getAttribute('data-i'); if (!c || !c.opts[i] || c.picked) return;
       var o = c.opts[i]; c.picked = today();
-      var k = { id: uid(), text: o.text, icon: '', done: false, date: today(), cat: Date.now(), ch: true, subs: (o.subs || []).map(function (x) { return { id: uid(), text: x, done: false }; }) };
+      var k = { id: uid(), text: o.text, icon: o.icon || '', done: false, date: today(), cat: Date.now(), ch: true, subs: (o.subs || []).map(function (x) { return { id: uid(), text: x, done: false }; }) };
       S.tasks.push(k); UI.taskOpen[k.id] = true; save(); render();
     },
     'ch-del': function (el) { var id = el.getAttribute('data-id'); S.choices = (S.choices || []).filter(function (c) { return c.id !== id; }); save(); render(); },
