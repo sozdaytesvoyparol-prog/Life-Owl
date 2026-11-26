@@ -65,6 +65,8 @@
     chevL: '<path d="M15 6l-6 6 6 6"/>',
     chevD: '<path d="M6 9l6 6 6-6"/>',
     cal: '<rect x="4" y="5" width="16" height="15" rx="2"/><path d="M4 10h16M9 3v4M15 3v4"/>',
+    eyeOff: '<path d="M3 3l18 18M10.6 10.6a2 2 0 002.8 2.8M9.9 5.1A9.8 9.8 0 0112 5c5 0 8.5 4 9.5 7a13 13 0 01-2.7 4M6.5 6.6A13 13 0 002.5 12c1 3 4.5 7 9.5 7a9.6 9.6 0 004-.9"/>',
+    hist: '<path d="M3 12a9 9 0 109-9 9 9 0 00-6.4 2.6L3 8M3 3v5h5M12 7v5l3 2"/>',
     dots: '<circle cx="5" cy="12" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="19" cy="12" r="1.5"/>',
     full: '<path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/>',
     brush: '<path d="M4 20c3 0 5-1 5-4a3 3 0 0 1 3-3l7-8a2 2 0 0 0-3-3l-8 7a3 3 0 0 0-3 3c0 3-1 5-1 8z" transform="translate(0,-2)"/>',
@@ -214,7 +216,7 @@
       profile: { avatar: '' },
       tasks: [], projects: [], motivations: [], notes: [],
       habits: [{ id: 'sys-enter', name: 'Зайти в приложение', icon: '📱', type: 'good', goal: 'Каждый день', created: t, log: {}, sys: true }],
-      completed: {}, frozen: {}, talk: {}, models: [], pinned: [], hall: [], hallClosed: {}
+      completed: {}, frozen: {}, talk: {}, models: [], pinned: [], hall: [], hallClosed: {}, hist: []
     };
   }
   function normalize(st) {
@@ -1063,8 +1065,8 @@
     return '<div class="model">' + m + '</div>';
   }
     var RS = (parseFloat(getComputedStyle(document.documentElement).fontSize) || 16) / 16, LROW = Math.round(54 * RS), LGAP = Math.round(10 * RS);
-  var LAY_DEF = { hero: { x: 0, y: 0, w: 12, h: 4 }, tasks: { x: 0, y: 4, w: 8, h: 8 }, msg: { x: 8, y: 4, w: 4, h: 3 }, add: { x: 8, y: 7, w: 4, h: 2 }, kpd: { x: 8, y: 9, w: 4, h: 3 }, week: { x: 0, y: 12, w: 5, h: 2 }, int: { x: 5, y: 12, w: 3, h: 2 }, choice: { x: 8, y: 12, w: 4, h: 4 } };
-  var LAY_MIN = { hero: [3, 2], tasks: [3, 3], msg: [2, 1], add: [2, 1], kpd: [2, 2], week: [2, 1], int: [2, 1], choice: [3, 2] };
+  var LAY_DEF = { hero: { x: 0, y: 0, w: 12, h: 4 }, tasks: { x: 0, y: 4, w: 8, h: 8 }, msg: { x: 8, y: 4, w: 4, h: 3 }, add: { x: 8, y: 7, w: 4, h: 2 }, kpd: { x: 8, y: 9, w: 4, h: 3 }, week: { x: 0, y: 12, w: 5, h: 2 }, int: { x: 5, y: 12, w: 3, h: 2 }, choice: { x: 8, y: 12, w: 3, h: 2 } };
+  var LAY_MIN = { hero: [3, 2], tasks: [3, 3], msg: [2, 1], add: [2, 1], kpd: [2, 2], week: [2, 1], int: [2, 1], choice: [2, 1] };
   function layItems() {
     var it = {}, cur = S.settings.layout.items || {};
     Object.keys(LAY_DEF).forEach(function (k) { it[k] = Object.assign({}, LAY_DEF[k], cur[k] || {}); });
@@ -1077,7 +1079,7 @@
     order.forEach(function (id) { while (placed.some(function (o) { return layHit(items[id], items[o]); })) items[id].y++; placed.push(id); });
   }
   function layStyle(it) { return 'left:' + (it.x / 12 * 100) + '%;width:calc(' + (it.w / 12 * 100) + '% - ' + LGAP + 'px);top:' + it.y * LROW + 'px;height:' + (it.h * LROW - LGAP) + 'px;'; }
-  var LAY_NAMES = { hero: 'Приветствие', tasks: 'Список действий', msg: 'Сообщение дня', add: 'Добавить действие', kpd: 'КПД сегодня', week: 'Статус недели', int: 'Добавить взаимодействие', choice: 'Добавить выбор' };
+  var LAY_NAMES = { hero: 'Приветствие', tasks: 'Список действий', msg: 'Сообщение дня', add: 'Добавить действие', kpd: 'КПД сегодня', week: 'Статус недели', int: 'Добавить взаимодействие', choice: 'Добавить выборочное действие' };
   var LAY_ICO = { hero: 'star', tasks: 'check', msg: 'chat', add: 'plus', kpd: 'bars', week: 'fire', int: 'loop', choice: 'folder' };
   /* время у действий: точное или «раз в N часов» с обратным отсчётом */
   function fmtLeft(ms) {
@@ -1255,13 +1257,18 @@
   function ladderHtml() {
     var st = streakInfo().streak, i = stageOf(st), pos = Math.round(ladderPos(st) * 1000) / 10, nx = STEPS[i], sb = stabInfo();
     function tip(k) { var x = STEPS[k], d = x[0] - st; return x[1] + ' · ' + x[0] + ' ' + plural(x[0], ['день', 'дня', 'дней']) + ' подряд — ' + (d <= 0 ? 'пройдено ✓' : 'осталось ' + d + ' ' + plural(d, ['день', 'дня', 'дней'])); }
-    var nodes = STEPS.map(function (s, k) { return '<button class="lad-n' + (st >= s[0] ? ' on' : '') + (k === i - 1 ? ' cur' : '') + (k < 2 ? ' tl' : k > 5 ? ' tr' : '') + '" style="left:' + ((k + 1) / STEPS.length * 100) + '%" data-tip="' + esc(tip(k)) + '" tabindex="0"></button>'; }).join('');
-    var lbs = STEPS.map(function (s, k) { return '<span class="' + (st >= s[0] ? 'on' : '') + '" style="left:' + ((k + 1) / STEPS.length * 100) + '%">' + s[2] + '</span>'; }).join('');
+    var TH = [0].concat(STEPS.map(function (x) { return x[0]; })), LB = ['0'].concat(STEPS.map(function (x) { return x[2]; }));
+    var cols = TH.map(function (th, j) {
+      var seg = j < TH.length - 1 ? (st >= TH[j + 1] ? 100 : st <= th ? 0 : Math.round((st - th) / (TH[j + 1] - th) * 100)) : -1;
+      var tp = j === 0 ? 'Старт · ' + st + ' ' + plural(st, ['день', 'дня', 'дней']) + ' подряд' : tip(j - 1);
+      return '<div class="lad-s' + (st >= th ? ' on' : '') + (j === i ? ' cur' : '') + '">' + (seg >= 0 ? '<i class="lad-c" style="--p:' + seg + '%"></i>' : '') +
+        '<button class="lad-n' + (j < 2 ? ' tl' : j > 6 ? ' tr' : '') + '" data-tip="' + esc(tp) + '" tabindex="0">' + (j === i ? FLAME('lad-fl') : (st >= th ? ic('tick') : '')) + '</button><span class="lad-l">' + LB[j] + '</span></div>';
+    }).join('');
     var GOLD = 100, inG = st >= GOLD, gp = Math.min(100, Math.round(st / GOLD * 1000) / 10);
     var gtip = inG ? 'Золотое время: ' + st + ' ' + plural(st, ['день', 'дня', 'дней']) + ' подряд. Ты полностью вшит в ритм.' : 'Золотое время начинается со 100 дней серии. Осталось ' + (GOLD - st) + ' ' + plural(GOLD - st, ['день', 'дня', 'дней']);
     return '<div class="lad"><div class="lad-top"><b>' + stageLabel(i) + '</b><span>' + (nx ? 'до «' + nx[1] + '»: ' + (nx[0] - st) + ' ' + plural(nx[0] - st, ['день', 'дня', 'дней']) : 'вершина пройдена') + '</span></div>' +
-      '<div class="lad-tr"><i class="lad-fill" style="width:' + pos + '%"></i>' + nodes + '<span class="lad-dot" style="left:' + pos + '%" data-tip="' + esc('Ты здесь: ' + st + ' ' + plural(st, ['день', 'дня', 'дней']) + ' подряд') + '">' + FLAME('lad-fl') + '</span></div><div class="lad-lb"><span class="on" style="left:0">0</span>' + lbs + '</div>' +
-      '<div class="gt2' + (inG ? ' on' : '') + '" data-tip="' + esc(gtip) + '"><div class="gt2-h"><span class="gt2-ic">✦</span><b>Золотое время</b><em>' + (inG ? 'активно' : st + ' / ' + GOLD) + '</em></div><div class="gt2-bar"><i style="width:' + (inG ? 100 : gp) + '%"></i><u></u></div><small>' + (inG ? '100+ дней подряд — ты в золотом времени' : 'открывается на 100-й день серии') + '</small></div></div>';
+      '<div class="lad-steps">' + cols + '</div>' +
+      (inG ? '<div class="gt2 on"><div class="gt2-h"><span class="gt2-ic">✦</span><b>Золотое время</b><em>' + st + ' ' + plural(st, ['день', 'дня', 'дней']) + '</em></div><div class="gt2-bar"><i style="width:100%"></i><u></u></div></div>' : '') + '</div>';
   }
   function weekModal() {
     var st = streakInfo().streak, cur = stageOf(st);
@@ -1623,16 +1630,31 @@
       '<section class="glass hall-top"><div><b>' + list.length + '</b><small>на доске</small></div><div><b>' + total + '</b><small>дней дисциплины</small></div></section>' +
       (cards ? '<div class="hall-grid" data-hf="' + (S.settings.hallFrame || 'crown') + '">' + cards + '</div>' : '<div class="glass hall-empty"><svg viewBox="0 0 24 24">' + SVG.medal + '</svg><b>Доска пока пуста</b></div>');
   }
+  /* История действий: скрытые, удалённые и убранные ради выбора — отсюда их можно вернуть */
+  function histPush(k, why) {
+    S.hist = S.hist || []; S.hist.unshift({ id: uid(), k: JSON.parse(JSON.stringify(k)), why: why, at: Date.now() }); if (S.hist.length > 150) S.hist.length = 150;
+    if (k.tpl) S.pinned = (S.pinned || []).filter(function (p) { return p.id !== k.tpl; });
+    S.tasks = S.tasks.filter(function (x) { return x.id !== k.id; });
+  }
+  var HIST_WHY = { hid: ['Скрыто', 'eyeOff'], del: ['Удалено', 'trash'], ch: ['Ушло в выбор', 'loop'] };
+  function histModal() {
+    var L = S.hist || [];
+    openModal('<div class="hist"><div class="chm-title"><span class="chm-tic">' + ic('hist') + '</span><b>История действий</b><small>скрытые, удалённые и убранные ради выбора — верни обратно в один клик</small></div>' +
+      (L.length ? '<div class="hist-list">' + L.map(function (e) {
+        var w = HIST_WHY[e.why] || ['Убрано', 'hist'], n = (e.k.subs || []).length;
+        return '<div class="hist-r"><span class="hist-i">' + (e.k.icon ? esc(e.k.icon) : ic(w[1])) + '</span><div class="hist-t"><b>' + esc(e.k.text) + '</b><small><em class="hw-' + e.why + '">' + w[0] + '</em>' + (n ? ' · ' + n + ' ' + plural(n, ['поддействие', 'поддействия', 'поддействий']) : '') + ' · ' + esc(fmtShort(ds(new Date(e.at)))) + '</small></div>' +
+          '<button class="chip-t sm" data-action="hist-back" data-id="' + e.id + '">Вернуть</button><button class="ico-btn sm" data-action="hist-del" data-id="' + e.id + '" title="Удалить навсегда">' + ic('trash') + '</button></div>';
+      }).join('') + '</div>' : '<div class="hist-empty">' + ic('hist') + '<b>Здесь пока пусто</b><span>Скрывай действия кнопкой с глазом — они не удалятся, а появятся здесь.</span></div>') +
+      '<div class="modal-actions">' + (L.length ? '<button class="btn-soft" data-action="hist-clear">Очистить всё</button>' : '') + '<button class="btn-primary" data-action="modal-close">Готово</button></div></div>', true);
+  }
   function choiceHtml() {
-    var list = (S.choices || []).filter(function (c) { return !c.picked; }); UI.chOpen = UI.chOpen || {}; if (!list.length) return '';
-    return '<section class="glass choice"><div class="ch-h"><b>Выборочные действия</b></div>' +
-      (list.length ? list.map(function (c) {
-        var open = UI.chOpen[c.id] !== false;
-        return '<div class="ch-card' + (open ? ' open' : '') + '"><div class="ch-q"><button class="ico-btn sm ch-fold" data-action="ch-fold" data-id="' + c.id + '"><b class="' + (open ? 'up' : '') + '">▾</b></button><span>Что сделать сегодня?</span><button class="ico-btn sm" data-action="ch-del" data-id="' + c.id + '" title="Удалить">' + ic('trash') + '</button></div>' +
-          (open ? '<div class="ch-os">' + c.opts.map(function (o, i) {
-            return '<div class="row task ch-row"><button class="check" data-action="ch-pick" data-id="' + c.id + '" data-i="' + i + '"></button><span class="txt">' + esc(o.text) + '<em class="t-link">выбор</em></span>' + ((o.subs || []).length ? '<span class="sub-cnt">' + o.subs.length + ' подд.</span>' : '') + '</div>';
-          }).join('') + '</div>' : '') + '</div>';
-      }).join('') : '') + '</section>';
+    var list = (S.choices || []).filter(function (c) { return !c.picked; }); if (!list.length) return '';
+    return list.map(function (c) {
+      return '<div class="ch-win"><div class="ch-wh"><span class="ch-wi">⑂</span><b>Сделай выбор</b><small>одно действие на сегодня</small><button class="ico-btn sm" data-action="ch-del" data-id="' + c.id + '" title="Убрать выбор">' + ic('close') + '</button></div><div class="ch-wo">' +
+        c.opts.map(function (o, i) {
+          return (i ? '<div class="ch-or"><span>или</span></div>' : '') + '<button type="button" class="ch-op" data-action="ch-pick" data-id="' + c.id + '" data-i="' + i + '"><span class="ch-oi">' + (o.icon || (i + 1)) + '</span><span class="ch-ot"><b>' + esc(o.text) + '</b>' + ((o.subs || []).length ? '<small>' + o.subs.length + ' ' + plural(o.subs.length, ['поддействие', 'поддействия', 'поддействий']) + '</small>' : '') + '</span><i class="ch-ok">' + ic('tick') + '</i></button>';
+        }).join('') + '</div></div>';
+    }).join('');
   }
   function chRead() {
     var M = UI.chm; if (!M) return;
@@ -1739,18 +1761,20 @@
         (arch || k.link ? '' : '<button class="ico-btn" data-action="task-sub" data-id="' + k.id + '" title="Добавить поддействие">＋</button>') + ((n || nI) ? '<button class="sub-cnt" data-action="task-open" data-id="' + k.id + '">' + (n ? dn + '/' + n : '🔗 ' + nI) + ' <b class="' + (open ? 'up' : '') + '">▾</b></button>' : '') +
         (arch || k.link ? '' : '<button class="ico-btn ' + (k.tpl ? 'pinon' : '') + '" data-action="task-pin" data-id="' + k.id + '" title="Закрепить на каждый день">' + ic('pin') + '</button>') +
         (k.link ? '' : '<button class="ico-btn" data-action="' + (nI ? 'int-edit' : 'task-edit') + '" data-id="' + k.id + '" title="Редактировать">' + ic('pencil') + '</button>') +
+        (arch ? '' : '<button class="ico-btn" data-action="task-hide" data-id="' + k.id + '" title="Скрыть (останется в истории)">' + ic('eyeOff') + '</button>') +
         '<button class="ico-btn" data-action="task-del" data-id="' + k.id + '" title="Удалить">' + ic('trash') + '</button></div>' + noteH + subs + (open ? intsHtml(k, arch) : '') + '</div>';
     }).join('') : '<div class="empty">' + (arch ? 'В этот день действий не было.' : 'Пока пусто') + '</div>';
     var gr = greeting(), lay = S.settings.layout, wkOn = !S.settings.hideWeek && !arch;
     var heroH = '<div class="hero"><div class="hero-text"><h1 class="hello">' + gr[0] + '</h1><p class="sub">' + gr[1] + '</p>' + (wkOn && !lay.custom ? weekChip() : '') + '</div>' + (arch || !modelHtml() ? '' : '<div class="model-wrap">' + modelHtml() + '</div>') + '</div>';
-    var tasksH = '<section class="glass tasks pad-' + (S.settings.pad || 'glass') + '"><div class="tasks-head"><span class="ti">' + ic('cal') + '</span><b>' + (arch ? 'Действия за ' + esc(fmtLong(t)) : 'Твои действия на сегодня') + '</b><button class="ico-btn sm ord-b" data-action="ord-open" data-o="day" title="Порядок блоков">⇅</button>' +
-      '<span class="cnt">' + done + ' из ' + reqL.length + '</span><div class="progress sm"><i style="width:' + pct + '%"></i></div></div><div class="task-list">' + rows + '</div>' + '' + '</section>';
+    var tasksH = '<section class="glass tasks pad-' + (S.settings.pad || 'glass') + '"><div class="tasks-head"><span class="ti">' + ic('cal') + '</span><b>' + (arch ? 'Действия за ' + esc(fmtLong(t)) : 'Твои действия на сегодня') + '</b><button class="ico-btn sm ord-b" data-action="ord-open" data-o="day" title="Порядок блоков">⇅</button>' + (arch ? '' : '<button class="hist-b" data-action="hist-open" title="История действий">' + ic('hist') + '<span>История</span>' + ((S.hist || []).length ? '<i>' + S.hist.length + '</i>' : '') + '</button>') +
+      '<span class="cnt">' + done + ' из ' + reqL.length + '</span><div class="progress sm"><i style="width:' + pct + '%"></i></div></div><div class="task-list">' + (arch ? '' : choiceHtml()) + rows + '</div>' + '' + '</section>';
     var msgH = '<div class="glass motiv-card"><svg viewBox="0 0 24 24" class="star"><path d="M12 2l2.4 7.6L22 12l-7.6 2.4L12 22l-2.4-7.6L2 12l7.6-2.4z"/></svg><h4>' + esc(mm[0]) + '</h4><p>' + esc(mm[1]) + '</p></div>';
     var addH = '<button class="btn-add" data-action="task-add"><span class="plus">＋</span><span>Добавить действие</span></button>';
     var kpdH = '<div class="glass kpd-today">' + ringSvg(st.pct, 104) + '<div class="kt-txt"><small>КПД сегодня</small><b>' + st.total + ' из ' + DAY_MAX + '</b><span>заданий выполнено</span></div></div>';
     var foot = '<div class="today-foot"><button class="chip" data-action="day-pick">' + ic('cal') + ' ' + fmtShort(t) + '</button>' + (arch ? '<button class="btn-soft" data-action="day-today">Вернуться к сегодня</button>' : finishBtn()) + '</div>';
     var dock = arch ? '' : '<div class="fab-dock"><button class="fab-add" data-action="task-add" title="Добавить действие"><span>＋</span>Действие</button>' + (UI.layEdit ? '<button class="fab-edit on" data-action="lay-done">Готово</button>' : '<button class="fab-edit" data-action="lay-edit" title="Менять расположение и размер блоков">✎ Редактировать</button>') + '</div>';
-    var parts = { hero: heroH, tasks: tasksH, msg: msgH, add: addH, kpd: kpdH, week: '<div class="wk-solo">' + (wkOn ? weekChip() : '') + '</div>', int: '<button class="btn-add" data-action="int-quick"><span class="plus">＋</span><span>Добавить взаимодействие</span></button>', choice: '<div class="add-stack"><button class="btn-add" data-action="ch-add"><span class="plus">＋</span><span>Добавить выборочное действие</span></button></div>' + choiceHtml() };
+    var chBtn = '<button class="btn-add" data-action="ch-add"><span class="plus">＋</span><span>Добавить выборочное действие</span></button>';
+    var parts = { hero: heroH, tasks: tasksH, msg: msgH, add: addH, kpd: kpdH, week: '<div class="wk-solo">' + (wkOn ? weekChip() : '') + '</div>', int: '<button class="btn-add" data-action="int-quick"><span class="plus">＋</span><span>Добавить взаимодействие</span></button>', choice: chBtn };
     if (lay.custom && !arch) {
       lay.hidden = lay.hidden || []; if (!lay.v34) { lay.v34 = 1; ['int', 'choice'].forEach(function (h) { if (lay.hidden.indexOf(h) < 0) lay.hidden.push(h); }); }
       var ed = !!UI.layEdit, LY = layItems(), hid = lay.hidden || [];
@@ -1768,7 +1792,7 @@
       }).join('');
       return '<div class="today custom' + (ed ? ' editing' : '') + '">' + bar + '<div class="lgrid" id="lgrid" style="height:' + Math.max(1, Hh) * LROW + 'px">' + ovs + blocks + '</div>' + (ed ? '' : foot) + dock + '</div>';
     }
-    return '<div class="today' + (arch ? ' arch' : '') + '">' + heroH + (arch ? archHtml(t) : '') + '<div class="today-grid">' + tasksH + '<aside class="side">' + msgH + '<div class="add-stack">'+addH+'<button class="btn-add" data-action="int-quick"><span class="plus">＋</span><span>Добавить взаимодействие</span></button><button class="btn-add" data-action="ch-add"><span class="plus">＋</span><span>Добавить выборочное действие</span></button></div>' + (arch ? '' : choiceHtml()) + kpdH + '</aside></div>' + foot + dock + '</div>';
+    return '<div class="today' + (arch ? ' arch' : '') + '">' + heroH + (arch ? archHtml(t) : '') + '<div class="today-grid">' + tasksH + '<aside class="side">' + msgH + '<div class="add-stack">'+addH+'<button class="btn-add" data-action="int-quick"><span class="plus">＋</span><span>Добавить взаимодействие</span></button><button class="btn-add" data-action="ch-add"><span class="plus">＋</span><span>Добавить выборочное действие</span></button></div>' + kpdH + '</aside></div>' + foot + dock + '</div>';
   }
 
   /* ---------- вид: Мотивации ---------- */
@@ -2003,14 +2027,15 @@
     }
     var listSrc = tab === 'today' ? p.actions.filter(function (a) { return a.plan === t; }) : p.actions;
     var rowsA = listSrc.filter(function (a) { return !a.done; }).concat(listSrc.filter(function (a) { return a.done; })).map(arow).join('');
-    var statusItems = ['active', 'frozen', 'done'].map(function (s) {
-      return '<button data-action="proj-status" data-s="' + s + '">' + (p.status === s ? '✓ ' : '') + STATUS[s] + '</button>';
-    }).join('');
+    var SI = { active: ['▶', 'Активный'], frozen: ['❄', 'Заморозить'], done: ['✔', 'Завершить'] };
+    var statusItems = '<div class="mn-cap">Статус проекта</div>' + ['active', 'frozen', 'done'].map(function (s) {
+      return '<button class="mn-i mn-' + s + (p.status === s ? ' on' : '') + '" data-action="proj-status" data-s="' + s + '"><i>' + SI[s][0] + '</i><span>' + SI[s][1] + '</span>' + (p.status === s ? '<em>' + ic('tick') + '</em>' : '') + '</button>';
+    }).join('') + '<div class="mn-sep"></div>';
     return '<div class="glass pdet' + (tab === 'map' ? ' map' : '') + '"><div class="pd-head"><div class="pd-ico">' + avatarOrIcon(p.avatar, p.icon, 'lg') +
       '<button class="ico-btn pen" data-action="proj-edit" title="Изменить">' + ic('pencil') + '</button></div>' +
       '<div class="pd-title"><h2>' + esc(p.name) + '</h2><p>' + esc(p.desc || 'Без описания') + '</p></div>' +
       '<div class="menu-wrap"><button class="ico-btn" data-action="menu-toggle">' + ic('dots') + '</button><div class="menu">' +
-      '<button data-action="proj-edit">Редактировать</button>' + statusItems + '<button class="danger" data-action="proj-del">Удалить проект</button></div></div></div>' +
+      '<button class="mn-i mn-edit" data-action="proj-edit"><i>' + ic('pencil') + '</i><span>Редактировать</span></button><div class="mn-sep"></div>' + statusItems + '<button class="mn-i danger" data-action="proj-del"><i>' + ic('trash') + '</i><span>Удалить проект</span></button></div></div></div>' +
       '<div class="pd-stats"><div class="stat"><small>Прогресс</small><b>' + pc + '%</b></div><div class="stat"><small>Выполнено</small><b>' + dn + ' / ' + p.actions.length + '</b></div>' +
       '<div class="stat"><small>Статус</small><b>' + STATUS[p.status] + '</b></div></div>' +
       '<div class="pd-mid"><div class="glass inner"><h4>Прогресс проекта</h4>' + chartSvg({ id: 'ch-proj', pts: pts, labels: labels, ymax: 100, W: 520, H: 200 }) + '</div>' +
@@ -2712,7 +2737,7 @@
     autoDay();
     var v = $('#view');
     var sc = v.scrollTop;
-    var SCR = ['.pcards', '.n3-feed', '.n3-side', '.task-list', '.hall-grid', '.ach-grid', '.hlist', '.alist'], keep = {};
+    var SCR = ['.pcards', '.n3-feed', '.n3-side', '.task-list', '.hall-grid', '.ach-grid', '.hlist', '.alist', '.lb[data-b="tasks"] .lb-in', '.today-grid .tasks', '.lb[data-b="tasks"] .lb-sc'], keep = {};
     SCR.forEach(function (q) { var e = v.querySelector(q); if (e) keep[q] = e.scrollTop; });
     chartReg = [];
     v.innerHTML = VIEWS[UI.view]() + catNote(UI.view);
@@ -2729,12 +2754,22 @@
     if (UI.stylesOpen && $('#modal').classList.contains('open')) stylesRefresh();
   }
   /* Мягкая перерисовка после галочки: никакие анимации не переигрываются, играет только сама галочка */
-  function softRender(sel) {
-    var b = document.body; b.classList.add('nofx'); render();
-    requestAnimationFrame(function () { requestAnimationFrame(function () {
-      b.classList.remove('nofx');
-      if (sel) { var e = document.querySelector(sel); if (e && e.classList.contains('on') || (e && e.classList.contains('hb-btn'))) { e.classList.add('pop'); } }
-    }); });
+  function optTick(el) {
+    if (!el || !el.classList) return; var on = !el.classList.contains('on');
+    el.classList.toggle('on', on); el.innerHTML = on ? ic('tick') : ''; el.classList.remove('pop');
+    if (on) { void el.offsetWidth; el.classList.add('pop'); }
+    var r = el.closest && el.closest('.row, .sub'); if (r) r.classList.toggle('done', on);
+  }
+  function softRender(sel, wait) {
+    var b = document.body;
+    function go() {
+      b.classList.add('nofx'); render();
+      requestAnimationFrame(function () { requestAnimationFrame(function () {
+        b.classList.remove('nofx');
+        if (sel && !wait) { var e = document.querySelector(sel); if (e && e.classList.contains('on') || (e && e.classList.contains('hb-btn'))) { e.classList.add('pop'); } }
+      }); });
+    }
+    if (wait) setTimeout(go, wait); else go();
   }
   /* Появление: один раз при переходе, мягкая «пружинная» кривая, лёгкая каскадная подача.
      WebAnimations — после окончания на элементах ничего не остаётся, повторных запусков при перерисовке нет. */
@@ -2846,20 +2881,22 @@
         var lb = dayStats(today()).total; bmSetAll(lf.n, !lf.n.done); bmRecalc(lp, lf.n.id); syncProjStatus(lp); k.done = !!lf.n.done; save(); var la = dayStats(today()).total; softRender('[data-action="task-toggle"][data-id="' + k.id + '"]');
         if (k.done) gainToast('Действие проекта выполнено!', la - lb); return;
       }
+      optTick(el);
       var before = dayStats(today()).total;
       var ns = !k.done; k.done = ns; if (k.ev) { if (ns) k.lastAt = Date.now(); else delete k.lastAt; } if (ns) { if (k.cat && !k.tpl && Date.now() - k.cat < QUICK_SEC * 1000) { k.noKpd = true; toast('Закрыто сразу после создания — очки КПД не начисляются'); } else delete k.noKpd; } else delete k.noKpd;
       if (k.subs && k.subs.length) k.subs.forEach(function (s) { s.done = ns; });
       save();
       var after = dayStats(today()).total;
-      softRender('[data-action="task-toggle"][data-id="' + k.id + '"]');
+      softRender('[data-action="task-toggle"][data-id="' + k.id + '"]', 560);
       if (k.done && !k.noKpd) gainToast('Действие выполнено!', after - before);
     },
     'sub-toggle': function (el) {
       var k = byId(S.tasks, el.getAttribute('data-id')); if (!k) return;
       var s = byId(k.subs, el.getAttribute('data-sid')); if (!s) return;
+      optTick(el);
       var before = dayStats(today()).total;
       s.done = !s.done; k.done = subsDone(k.subs);
-      save(); var after = dayStats(today()).total; softRender('[data-action="sub-toggle"][data-sid="' + s.id + '"]');
+      save(); var after = dayStats(today()).total; softRender('[data-action="sub-toggle"][data-sid="' + s.id + '"]', 260);
       if (k.done) gainToast('Сложное действие выполнено!', after - before);
     },
     'task-sub': function (el) {
@@ -2874,7 +2911,12 @@
       else { var id = uid(); S.pinned.push({ id: id, text: k.text, icon: k.icon, ind: !!k.ind, subs: (k.subs || []).map(function (s) { return s.text; }), at: k.at || '', ev: k.ev || 0, note: k.note || '' }); k.tpl = id; toast('Будет появляться каждый день', true); }
       save(); render();
     },
-    'task-del': function (el) { var k = byId(S.tasks, el.getAttribute('data-id')); if (k && k.tpl) S.pinned = S.pinned.filter(function (p) { return p.id !== k.tpl; }); S.tasks = S.tasks.filter(function (x) { return x.id !== el.getAttribute('data-id'); }); save(); render(); },
+    'task-hide': function (el) { var k = byId(S.tasks, el.getAttribute('data-id')); if (!k) return; histPush(k, 'hid'); save(); render(); toast('Скрыто. Вернуть можно в «Истории»'); },
+    'hist-open': function () { histModal(); },
+    'hist-back': function (el) { var i = (S.hist || []).findIndex(function (e) { return e.id === el.getAttribute('data-id'); }); if (i < 0) return; var e = S.hist.splice(i, 1)[0], k = e.k; k.date = today(); k.done = false; if (k.subs) k.subs.forEach(function (x) { x.done = false; }); S.tasks.push(k); save(); render(); histModal(); },
+    'hist-del': function (el) { S.hist = (S.hist || []).filter(function (e) { return e.id !== el.getAttribute('data-id'); }); save(); histModal(); render(); },
+    'hist-clear': function () { S.hist = []; save(); histModal(); render(); },
+    'task-del': function (el) { var k = byId(S.tasks, el.getAttribute('data-id')); if (!k) return; if ((k.text || '').trim()) histPush(k, 'del'); else S.tasks = S.tasks.filter(function (x) { return x.id !== k.id; }); save(); render(); },
     'ta-int-tab': function (el) { taRead(); var v = el.getAttribute('data-s'); UI.ta.intTab = UI.ta.intTab === v ? '' : v; taskModal(); },
     'ta-int-pick': function (el) {
       taRead(); var T = UI.ta, kd = el.getAttribute('data-k'), id = el.getAttribute('data-id'); T.ints = T.ints || [];
@@ -3378,7 +3420,7 @@
     'ch-emo': function (el) { chRead(); var o = UI.chm.opts[UI.chm.cfg], e = el.getAttribute('data-e'); o.icon = o.icon === e ? '' : e; chModal(); },
     'ch-fill': function (el) {
       chRead(); var M = UI.chm, o = M.opts[M.act], v = el.getAttribute('data-v'), id = el.getAttribute('data-id');
-      o.text = v;
+      o.text = v; o.tid = M.src === 'act' ? id : '';
       if (M.src === 'act') { var k = byId(S.tasks, id); if (k) { if (k.icon && !o.icon) o.icon = k.icon; if (!o.subs.length && k.subs) o.subs = k.subs.map(function (x) { return x.text; }); } }
       var nx = -1; M.opts.forEach(function (x, i) { if (nx < 0 && !x.text) nx = i; }); if (nx >= 0) M.act = nx;
       chModal();
@@ -3391,12 +3433,14 @@
       chRead(); var opts = UI.chm.opts.filter(function (o) { return o.text; });
       if (opts.length < 2) { toast('Заполни минимум два варианта'); return; }
       S.choices = S.choices || []; S.choices.push({ id: uid(), opts: opts, date: today() });
+      opts.forEach(function (o) { if (o.tid) { var tk = byId(S.tasks, o.tid); if (tk && !tk.done) histPush(tk, 'ch'); } });
       if ((S.settings.layout.hidden || []).indexOf('choice') >= 0) H['lay-show']({ getAttribute: function () { return 'choice'; } });
       closeModal(); save(); render();
     },
     'ch-fold': function (el) { var id = el.getAttribute('data-id'); UI.chOpen = UI.chOpen || {}; UI.chOpen[id] = UI.chOpen[id] === false; render(); },
     'ch-pick': function (el) {
       var c = byId(S.choices || [], el.getAttribute('data-id')), i = +el.getAttribute('data-i'); if (!c || !c.opts[i] || c.picked) return;
+      (c.opts || []).forEach(function (x) { if (x.tid && x !== c.opts[i]) { var hh = (S.hist || []).filter(function (e) { return e.k.id === x.tid; })[0]; if (hh) hh.why = 'не выбрано'; } });
       var o = c.opts[i]; c.picked = today();
       var k = { id: uid(), text: o.text, icon: o.icon || '', done: false, date: today(), cat: Date.now(), ch: true, subs: (o.subs || []).map(function (x) { return { id: uid(), text: x, done: false }; }) };
       S.tasks.push(k); UI.taskOpen[k.id] = true; save(); render();
